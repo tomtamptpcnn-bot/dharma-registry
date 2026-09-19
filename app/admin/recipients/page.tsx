@@ -9,7 +9,7 @@ export default async function RecipientsPage({
   const filters = await searchParams;
   const [result, options] = await Promise.all([
     listRecipients(filters),
-    getRegistryOptions(),
+    getRegistryOptions("level"),
   ]);
   return <RecipientList {...result} filters={filters} options={options} />;
 }

@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   Alert,
   Modal,
@@ -87,7 +86,6 @@ export function OptionsManager({
       );
       setTarget(null);
       clearSearch();
-      router.refresh();
     } catch {
       setEditError("ดำเนินการไม่สำเร็จ กรุณาลองอีกครั้ง");
     } finally {
@@ -98,7 +96,6 @@ export function OptionsManager({
   const [error, setError] = useState("");
   const [form] = Form.useForm();
   const { message } = App.useApp();
-  const router = useRouter();
   async function save(input: { category: OptionCategory; value: string }) {
     setBusy(true);
     setError("");
@@ -112,7 +109,6 @@ export function OptionsManager({
       form.resetFields(["value"]);
       setCategory(input.category);
       clearSearch();
-      router.refresh();
     } catch {
       setError("เพิ่มตัวเลือกไม่สำเร็จ กรุณาลองอีกครั้ง");
     } finally {

@@ -37,12 +37,25 @@ export function summarizeDashboard(rows: DashboardRow[], today: string) {
   ]
     .sort()
     .reverse();
+  const monthTotals = new Map<string, { count: number; cents: number }>();
+  for (const row of rows) {
+    if (!row.received_date) continue;
+    const key = row.received_date.slice(0, 7);
+    const totals = monthTotals.get(key) ?? { count: 0, cents: 0 };
+    totals.count++;
+    totals.cents += Math.round((row.merit_amount ?? 0) * 100);
+    monthTotals.set(key, totals);
+  }
   const monthly = years.map((y) => ({
     year: y,
     months: Array.from({ length: 12 }, (_, i) => {
       const key = `${y}-${String(i + 1).padStart(2, "0")}`;
-      const selected = rows.filter((r) => r.received_date?.startsWith(key));
-      return { month: key, count: selected.length, merit: money(selected) };
+      const totals = monthTotals.get(key);
+      return {
+        month: key,
+        count: totals?.count ?? 0,
+        merit: (totals?.cents ?? 0) / 100,
+      };
     }),
   }));
   const groups = optionCategories.map((category) => {

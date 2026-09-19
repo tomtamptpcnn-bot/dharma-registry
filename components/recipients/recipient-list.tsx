@@ -87,7 +87,6 @@ export function RecipientList({
       setTarget(null);
       if (data.length === 1 && page > 1)
         navigate({ ...filters, page: String(page - 1) });
-      else router.refresh();
     } catch {
       message.error("ลบข้อมูลไม่สำเร็จ กรุณาลองอีกครั้ง");
     } finally {

@@ -63,7 +63,6 @@ export function RecipientForm({
           : "เพิ่มผู้รับธรรมะเรียบร้อยแล้ว",
       );
       router.push("/admin/recipients");
-      router.refresh();
     } catch {
       setError("ไม่สามารถบันทึกข้อมูลได้ กรุณาลองอีกครั้ง");
     } finally {

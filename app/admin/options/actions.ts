@@ -28,7 +28,9 @@ export async function createRegistryOption(input: unknown) {
             ? "มีรายการนี้ในหมวดนี้แล้ว"
             : "เพิ่มตัวเลือกไม่สำเร็จ กรุณาลองอีกครั้ง",
       };
-    revalidatePath("/admin", "layout");
+    revalidatePath("/admin/options");
+    revalidatePath("/admin/recipients", "layout");
+    revalidatePath("/admin/dashboard");
     return { data };
   } catch {
     return { error: "ไม่สามารถเชื่อมต่อฐานข้อมูลได้" };
@@ -65,7 +67,9 @@ export async function manageRegistryOption(input: unknown) {
                 ? "ไม่พบรายการ ข้อมูลอาจถูกลบแล้ว"
                 : "ดำเนินการไม่สำเร็จ กรุณาตรวจสอบว่ารัน migration สำหรับแก้ไขและลบแล้ว",
       };
-    revalidatePath("/admin", "layout");
+    revalidatePath("/admin/options");
+    revalidatePath("/admin/recipients", "layout");
+    revalidatePath("/admin/dashboard");
     return { success: true };
   } catch {
     return { error: "ไม่สามารถเชื่อมต่อฐานข้อมูลได้ กรุณาลองอีกครั้ง" };

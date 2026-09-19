@@ -10,14 +10,16 @@ import {
   addOptionCounts,
   countedOptions,
 } from "@/lib/option-counts";
-export async function getRegistryOptions(): Promise<RegistryOption[]> {
+export async function getRegistryOptions(
+  category?: OptionCategory,
+): Promise<RegistryOption[]> {
   const { supabase } = await requireUser();
   const result: RegistryOption[] = [];
   // Supabase limits each response. Page through all master values.
   for (let offset = 0; ; offset += 500) {
-    const { data, error } = await supabase
-      .from("registry_options")
-      .select("*")
+    let query = supabase.from("registry_options").select("*");
+    if (category) query = query.eq("category", category);
+    const { data, error } = await query
       .order("category")
       .order("value")
       .order("id")

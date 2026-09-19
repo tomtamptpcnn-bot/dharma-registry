@@ -65,7 +65,13 @@ export async function saveRecipient(values: unknown, id?: string) {
   } catch {
     return { error: "ไม่สามารถเชื่อมต่อฐานข้อมูลได้" };
   }
-  revalidatePath("/admin", "layout");
+  revalidatePath("/admin/recipients");
+  revalidatePath("/admin/dashboard");
+  revalidatePath("/admin/options");
+  if (id) {
+    revalidatePath(`/admin/recipients/${id}`);
+    revalidatePath(`/admin/recipients/${id}/edit`);
+  }
   return { success: true };
 }
 export async function deleteRecipient(id: string) {
@@ -84,6 +90,12 @@ export async function deleteRecipient(id: string) {
   } catch {
     return { error: "ไม่สามารถเชื่อมต่อฐานข้อมูลได้" };
   }
-  revalidatePath("/admin", "layout");
+  revalidatePath("/admin/recipients");
+  revalidatePath("/admin/dashboard");
+  revalidatePath("/admin/options");
+  if (id) {
+    revalidatePath(`/admin/recipients/${id}`);
+    revalidatePath(`/admin/recipients/${id}/edit`);
+  }
   return { success: true };
 }

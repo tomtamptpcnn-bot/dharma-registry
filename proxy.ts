@@ -21,10 +21,11 @@ export async function proxy(request: NextRequest) {
       },
     },
   });
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (protectedRoute && (!user || user.is_anonymous)) {
+  const { data, error } = await supabase.auth.getClaims();
+  if (
+    protectedRoute &&
+    (error || !data?.claims?.sub || data.claims.is_anonymous)
+  ) {
     const redirect = NextResponse.redirect(new URL("/login", request.url));
     response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
     redirect.headers.set("Cache-Control", "private, no-store");
