@@ -1,10 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { unstable_rethrow, useRouter } from "next/navigation";
 import {
   Alert,
-  App,
   Button,
   DatePicker,
   Divider,
@@ -28,12 +27,11 @@ export function RecipientForm({
   recipient?: DharmaRecipient;
   options: RegistryOption[];
 }) {
-  const [busy, setBusy] = useState(false);
+  const [busy, startTransition] = useTransition();
   const [error, setError] = useState("");
-  const { message } = App.useApp();
   const router = useRouter();
-  async function submit(values: Values) {
-    setBusy(true);
+  function submit(values: Values) {
+    if (busy) return;
     setError("");
     const nullable = (value: string | null | undefined) =>
       value?.trim() || null;
@@ -51,23 +49,16 @@ export function RecipientForm({
       level: nullable(values.level),
       received_place: nullable(values.received_place),
     };
-    try {
-      const result = await saveRecipient(input, recipient?.id);
-      if (result.error) {
+    startTransition(async () => {
+      try {
+        const result = await saveRecipient(input, recipient?.id);
         setError(result.error);
-        return;
+      } catch (error) {
+        // Let Next.js handle the successful action's redirect.
+        unstable_rethrow(error);
+        setError("ไม่สามารถบันทึกข้อมูลได้ กรุณาลองอีกครั้ง");
       }
-      message.success(
-        recipient
-          ? "แก้ไขข้อมูลเรียบร้อยแล้ว"
-          : "เพิ่มผู้รับธรรมะเรียบร้อยแล้ว",
-      );
-      router.push("/admin/recipients");
-    } catch {
-      setError("ไม่สามารถบันทึกข้อมูลได้ กรุณาลองอีกครั้ง");
-    } finally {
-      setBusy(false);
-    }
+    });
   }
   return (
     <>

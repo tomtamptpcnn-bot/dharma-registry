@@ -72,7 +72,9 @@ export async function saveRecipient(values: unknown, id?: string) {
     revalidatePath(`/admin/recipients/${id}`);
     revalidatePath(`/admin/recipients/${id}/edit`);
   }
-  return { success: true };
+  // Navigate in the action response instead of refreshing the form first
+  // and then making a separate client navigation request.
+  redirect("/admin/recipients");
 }
 export async function deleteRecipient(id: string) {
   const { supabase } = await requireUser();
