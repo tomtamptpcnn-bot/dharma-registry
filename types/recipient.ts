@@ -8,6 +8,7 @@ export interface DharmaRecipient {
   phone: string | null;
   recommended_by: string | null;
   certified_by: string | null;
+  transmitted_by: string | null;
   received_date: string | null;
   merit_amount: number | null;
   class_name: string | null;

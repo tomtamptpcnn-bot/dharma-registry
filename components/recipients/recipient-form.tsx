@@ -1,16 +1,10 @@
 "use client";
+import { BuddhistDatePicker as DatePicker } from "@/components/shared/buddhist-date-picker";
+import { AddressInput } from "@/components/recipients/address-input";
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { unstable_rethrow, useRouter } from "next/navigation";
-import {
-  Alert,
-  Button,
-  DatePicker,
-  Divider,
-  Form,
-  Input,
-  InputNumber,
-} from "antd";
+import { Alert, Button, Divider, Form, Input, InputNumber } from "antd";
 import { ArrowLeftOutlined, SaveOutlined } from "@ant-design/icons";
 import dayjs, { type Dayjs } from "dayjs";
 import { saveRecipient } from "@/app/actions";
@@ -43,6 +37,7 @@ export function RecipientForm({
       phone: nullable(values.phone),
       recommended_by: nullable(values.recommended_by),
       certified_by: nullable(values.certified_by),
+      transmitted_by: nullable(values.transmitted_by),
       received_date: values.received_date?.format("YYYY-MM-DD") ?? null,
       merit_amount: values.merit_amount ?? null,
       class_name: nullable(values.class_name),
@@ -146,11 +141,7 @@ export function RecipientForm({
               />
             </Form.Item>
             <Form.Item name="address" label="ที่อยู่" className="md:col-span-2">
-              <Input.TextArea
-                rows={3}
-                maxLength={1000}
-                placeholder="บ้านเลขที่ ถนน ตำบล อำเภอ จังหวัด และรหัสไปรษณีย์"
-              />
+              <AddressInput disabled={busy} />
             </Form.Item>
           </div>
           <Divider />
@@ -170,10 +161,18 @@ export function RecipientForm({
                 disabled={busy}
               />
             </Form.Item>
+            <Form.Item name="transmitted_by" label="อาจารย์ถ่ายทอดเบิกธรรม">
+              <OptionSelect
+                category="transmitted_by"
+                options={options}
+                disabled={busy}
+              />
+            </Form.Item>
             <Form.Item name="received_date" label="วันที่รับธรรม">
               <DatePicker
                 className="w-full"
-                format="DD/MM/YYYY"
+                format="DD/MM/BBBB"
+                inputReadOnly
                 placeholder="เลือกวันที่รับธรรม"
               />
             </Form.Item>

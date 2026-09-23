@@ -8,6 +8,7 @@ const row: DashboardRow = {
   received_date: "2026-09-18",
   merit_amount: 0.1,
   recommended_by: "A",
+  transmitted_by: null,
   certified_by: "A",
   class_name: null,
   level: "c",

@@ -1,4 +1,5 @@
 "use client";
+import { BuddhistDatePicker as DatePicker } from "@/components/shared/buddhist-date-picker";
 import type { RegistryOption } from "@/types/options";
 import { useTransition, useState } from "react";
 import Link from "next/link";
@@ -6,7 +7,6 @@ import { useRouter } from "next/navigation";
 import {
   App,
   Button,
-  DatePicker,
   Form,
   Input,
   Modal,
@@ -128,6 +128,12 @@ export function RecipientList({
       title: "อาจารย์รับรอง",
       dataIndex: "certified_by",
       width: 160,
+      render: text,
+    },
+    {
+      title: "อาจารย์ถ่ายทอดเบิกธรรม",
+      dataIndex: "transmitted_by",
+      width: 200,
       render: text,
     },
     {
@@ -258,7 +264,8 @@ export function RecipientList({
             <Form.Item name="dates" label="วันที่รับธรรม">
               <DatePicker.RangePicker
                 className="w-full"
-                format="DD/MM/YYYY"
+                format="DD/MM/BBBB"
+                inputReadOnly
                 placeholder={["วันที่เริ่มต้น", "วันที่สิ้นสุด"]}
               />
             </Form.Item>
@@ -318,7 +325,7 @@ export function RecipientList({
           columns={columns}
           dataSource={data}
           loading={pending}
-          scroll={{ x: 2130 }}
+          scroll={{ x: 2330 }}
           locale={{
             emptyText:
               filters.q || filters.level || filters.from

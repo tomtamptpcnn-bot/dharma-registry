@@ -43,7 +43,9 @@ export async function getRegistryOptionStats() {
   for (let offset = 0; ; offset += 500) {
     const { data, error } = await supabase
       .from("dharma_recipients")
-      .select("recommended_by, certified_by, class_name, level, received_place")
+      .select(
+        "recommended_by, certified_by, transmitted_by, class_name, level, received_place",
+      )
       .order("id")
       .range(offset, offset + 499);
     if (error)

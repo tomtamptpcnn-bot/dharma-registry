@@ -1,6 +1,8 @@
 import dayjs from "dayjs";
+import buddhistEra from "dayjs/plugin/buddhistEra";
+dayjs.extend(buddhistEra);
 export const formatDate = (value: string | null) =>
-  value ? dayjs(value).format("DD/MM/YYYY") : "—";
+  value ? dayjs(value).format("DD/MM/BBBB") : "—";
 export const formatMoney = (value: number | null) =>
   value === null
     ? "—"

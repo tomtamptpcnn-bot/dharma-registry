@@ -8,6 +8,7 @@ const valid = {
   address: null,
   phone: "0812345678",
   recommended_by: null,
+  transmitted_by: null,
   certified_by: null,
   received_date: "2024-02-29",
   merit_amount: 100.25,

@@ -111,7 +111,7 @@ export function DashboardOverview({
             className="min-w-40"
             options={stats.monthly.map((y) => ({
               value: y.year,
-              label: `ปี ${Number(y.year) + 543} (${y.year})`,
+              label: `ปี พ.ศ. ${Number(y.year) + 543}`,
             }))}
           />
         </div>

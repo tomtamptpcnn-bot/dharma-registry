@@ -90,7 +90,7 @@ export async function getDashboard() {
     const { data, error } = await supabase
       .from("dharma_recipients")
       .select(
-        "age,phone,address,received_date,merit_amount,recommended_by,certified_by,class_name,level,received_place",
+        "age,phone,address,received_date,merit_amount,recommended_by,certified_by,transmitted_by,class_name,level,received_place",
       )
       .order("id")
       .range(offset, offset + 499);

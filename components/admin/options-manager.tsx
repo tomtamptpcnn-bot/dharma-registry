@@ -119,7 +119,9 @@ export function OptionsManager({
     <>
       <h1 className="page-heading">จัดการข้อมูลตัวเลือก</h1>
       <p className="page-description mb-6">
-        เพิ่มข้อมูลสำหรับเลือกใช้ในทะเบียน หรือกด + ข้างช่องเลือกในฟอร์มทะเบียน
+        เพิ่ม แก้ไข และลบข้อมูลตัวเลือกทั้ง 6 หมวด
+        ชื่อในหมวดเดียวกันห้ามซ้ำแม้ตัวพิมพ์เล็ก–ใหญ่ต่างกัน
+        ลบได้เฉพาะรายการที่ไม่มีทะเบียนใช้งาน
       </p>
       <section className="section-card mb-6">
         {error && (
@@ -268,6 +270,12 @@ export function OptionsManager({
                   </Button>
                   <Button
                     danger
+                    disabled={row.recipientCount > 0}
+                    title={
+                      row.recipientCount > 0
+                        ? `ลบไม่ได้ มีทะเบียนใช้งาน ${row.recipientCount} รายการ`
+                        : "ลบรายการที่ไม่มีทะเบียนใช้งาน"
+                    }
                     icon={<DeleteOutlined />}
                     onClick={() => openAction(row, "delete")}
                     aria-label={`ลบ ${row.value}`}

@@ -17,6 +17,7 @@ export function RecipientDetail({
     ["ที่อยู่", r.address],
     ["อาจารย์แนะนำ", r.recommended_by],
     ["อาจารย์รับรอง", r.certified_by],
+    ["อาจารย์ถ่ายทอดเบิกธรรม", r.transmitted_by],
     ["วันที่รับธรรม", formatDate(r.received_date)],
     [
       "สร้างบุญ",

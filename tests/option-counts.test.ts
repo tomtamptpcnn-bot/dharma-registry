@@ -10,6 +10,7 @@ test("counts across batches, separates categories and includes unused options", 
   const counts = createOptionCounts();
   const row: RecipientOptionValues = {
     recommended_by: "Teacher",
+    transmitted_by: null,
     certified_by: "Teacher",
     class_name: null,
     level: "c",

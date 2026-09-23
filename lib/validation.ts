@@ -24,6 +24,7 @@ export const recipientSchema = z.object({
     .nullable(),
   recommended_by: optionalText,
   certified_by: optionalText,
+  transmitted_by: optionalText,
   received_date: z
     .string()
     .refine((v) => dayjs(v, "YYYY-MM-DD", true).isValid(), "วันที่ไม่ถูกต้อง")

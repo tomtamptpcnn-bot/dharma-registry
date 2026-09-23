@@ -8,7 +8,18 @@ dayjs.locale("th");
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ConfigProvider
-      locale={thTH}
+      locale={{
+        ...thTH,
+        DatePicker: {
+          ...thTH.DatePicker!,
+          lang: {
+            ...thTH.DatePicker!.lang,
+            yearFormat: "BBBB",
+            cellYearFormat: "BBBB",
+            fieldDateFormat: "DD/MM/BBBB",
+          },
+        },
+      }}
       theme={{
         token: {
           colorPrimary: "#176854",
