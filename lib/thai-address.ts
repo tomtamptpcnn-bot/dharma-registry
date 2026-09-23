@@ -21,23 +21,78 @@ export function joinAddress(parts: AddressParts): string {
     .filter(Boolean)
     .join(" ");
 }
-// Only split a recognized suffix. Legacy free-text addresses remain intact.
+function escapePattern(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// Match from the end so village/street names are not mistaken for districts.
+function takeSuffix(
+  value: string,
+  names: string[],
+  prefix: string,
+  allowBare = false,
+) {
+  for (const name of [...names].sort((a, b) => b.length - a.length)) {
+    const pattern = new RegExp(`(?:${prefix})\\s*${escapePattern(name)}$`);
+    const match = pattern.exec(value);
+    if (match) return { name, rest: value.slice(0, match.index).trim() };
+    if (allowBare && (value === name || value.endsWith(` ${name}`))) {
+      return { name, rest: value.slice(0, -name.length).trim() };
+    }
+  }
+  return undefined;
+}
+
 export function splitAddress(value: string | null | undefined): AddressParts {
   if (!value) return { detail: "" };
-  const match = value.match(
-    /^(.*?)\s*(?:(?:ต\.|แขวง)(\S+) )?(?:(?:อ\.|เขต)(\S+) )?จ\.(\S+)(?: (\d{5}))?$/,
+  const original = { detail: value };
+  let text = value.trim();
+  const postal = text.match(/(?:\s*)(\d{5})$/)?.[1];
+  if (postal) text = text.slice(0, -postal.length).trim();
+  // Normalize Bangkok aliases only at the province position.
+  text = text.replace(/(?:กรุงเทพฯ|กทม\.?)$/, "กรุงเทพมหานคร");
+  const province = takeSuffix(
+    text,
+    Object.keys(thaiAddresses),
+    "จังหวัด|จ\\.|(?=กรุงเทพมหานคร)",
+    true,
   );
-  if (!match) return { detail: value };
-  const [, detail, subdistrict, district, province] = match;
+  if (!province) return original;
+  const districts = thaiAddresses[province.name];
+  const district = takeSuffix(
+    province.rest,
+    Object.keys(districts),
+    "อำเภอ|อําเภอ|อ\\.|เขต",
+    true,
+  );
+  const subdistrict =
+    district &&
+    takeSuffix(
+      district.rest,
+      districts[district.name].map(([name]) => name),
+      "ตำบล|ตําบล|ต\\.|แขวง",
+      true,
+    );
+  const detail = subdistrict?.rest ?? district?.rest ?? province.rest;
+  // A labeled but unrecognized area must not silently become a different area.
+  if (/(?:จังหวัด|จ\.|อำเภอ|อําเภอ|อ\.|เขต|ตำบล|ตําบล|ต\.|แขวง)/.test(detail))
+    return original;
+  // A bare province alone might be a street or village name; require a district.
   if (
-    !thaiAddresses[province] ||
-    (district && !thaiAddresses[province][district]) ||
-    (subdistrict &&
-      !thaiAddresses[province][district]?.some(
-        ([name]) => name === subdistrict,
-      ))
+    !district &&
+    !/(?:จังหวัด|จ\.)\s*\S+$/.test(text) &&
+    province.name !== "กรุงเทพมหานคร"
   )
-    return { detail: value };
-  const parts = { detail, province, district, subdistrict };
-  return joinAddress(parts) === value.trim() ? parts : { detail: value };
+    return original;
+  const expectedPostal =
+    subdistrict &&
+    districts[district!.name].find(([name]) => name === subdistrict.name)?.[1];
+  // Preserve an explicit postal code we cannot safely reproduce.
+  if (postal && postal !== expectedPostal) return original;
+  return {
+    detail,
+    province: province.name,
+    district: district?.name,
+    subdistrict: subdistrict?.name,
+  };
 }

@@ -42,6 +42,13 @@
   white-space: nowrap;
   font-weight: 600;
 }
+.recipient-table .ant-table-thead > tr > th {
+  white-space: normal;
+  line-height: 1.4;
+}
+.recipient-table .ant-table-tbody > tr > td {
+  padding-block: 6px;
+}
 .ant-form-item-label > label {
   font-weight: 500;
 }

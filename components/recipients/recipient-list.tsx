@@ -97,43 +97,72 @@ export function RecipientList({
   const columns: TableColumnsType<DharmaRecipient> = [
     {
       title: "ลำดับ",
-      width: 70,
+      width: 54,
       render: (_, __, index) => (page - 1) * pageSize + index + 1,
     },
     {
       title: "ชื่อ-นามสกุล",
       dataIndex: "full_name",
       fixed: "left",
-      width: 210,
+      width: 180,
+      ellipsis: true,
       render: (value: string, record) => (
         <Link
           className="font-semibold !text-[#176854]"
+          title={value}
           href={`/admin/recipients/${record.id}`}
         >
           {value}
         </Link>
       ),
     },
-    { title: "อายุ", dataIndex: "age", width: 70, render: text },
-    { title: "ชื่อเล่น", dataIndex: "nickname", width: 110, render: text },
-    { title: "ที่อยู่", dataIndex: "address", width: 250, render: text },
-    { title: "เบอร์โทร", dataIndex: "phone", width: 130, render: text },
+    {
+      title: "อายุ",
+      dataIndex: "age",
+      width: 54,
+      ellipsis: true,
+      render: text,
+    },
+    {
+      title: "ชื่อเล่น",
+      dataIndex: "nickname",
+      width: 90,
+      ellipsis: true,
+      render: text,
+    },
+    {
+      title: "ที่อยู่",
+      dataIndex: "address",
+      width: 200,
+      ellipsis: true,
+      render: text,
+    },
+    {
+      title: "เบอร์โทร",
+      dataIndex: "phone",
+      width: 115,
+      ellipsis: true,
+      render: text,
+    },
     {
       title: "อาจารย์แนะนำ",
       dataIndex: "recommended_by",
-      width: 160,
+      width: 135,
+      ellipsis: true,
       render: text,
     },
     {
       title: "อาจารย์รับรอง",
       dataIndex: "certified_by",
-      width: 160,
+      width: 135,
+      ellipsis: true,
       render: text,
     },
     {
       title: "อาจารย์ถ่ายทอดเบิกธรรม",
       dataIndex: "transmitted_by",
-      width: 200,
+      width: 160,
+      ellipsis: true,
       render: text,
     },
     {
@@ -147,38 +176,57 @@ export function RecipientList({
             ? "descend"
             : null,
       showSorterTooltip: { title: "เรียงวันที่เก่าสุด / ล่าสุด" },
-      width: 130,
+      width: 115,
       render: formatDate,
     },
     {
       title: "สร้างบุญ (บาท)",
       dataIndex: "merit_amount",
-      width: 130,
+      width: 115,
       align: "right",
       render: formatMoney,
     },
-    { title: "ชั้น", dataIndex: "class_name", width: 100, render: text },
+    {
+      title: "ชั้น",
+      dataIndex: "class_name",
+      width: 80,
+      ellipsis: true,
+      render: text,
+    },
     {
       title: "ระดับ",
       dataIndex: "level",
-      width: 120,
+      width: 80,
+      ellipsis: true,
       render: (value: string | null) =>
-        value ? <Tag color="green">{value}</Tag> : "—",
+        value ? (
+          <Tag
+            className="max-w-full truncate !me-0"
+            title={value}
+            color="green"
+          >
+            {value}
+          </Tag>
+        ) : (
+          "—"
+        ),
     },
     {
       title: "สถานที่รับธรรม",
       dataIndex: "received_place",
-      width: 240,
+      width: 160,
+      ellipsis: true,
       render: text,
     },
     {
       title: "จัดการ",
       key: "actions",
-      width: 150,
+      width: 112,
       render: (_, record) => (
         <Space size={2}>
           <Link href={`/admin/recipients/${record.id}`}>
             <Button
+              size="small"
               type="text"
               icon={<EyeOutlined />}
               aria-label={`ดูรายละเอียด ${record.full_name}`}
@@ -187,6 +235,7 @@ export function RecipientList({
           </Link>
           <Link href={`/admin/recipients/${record.id}/edit`}>
             <Button
+              size="small"
               type="text"
               icon={<EditOutlined />}
               aria-label={`แก้ไข ${record.full_name}`}
@@ -195,6 +244,7 @@ export function RecipientList({
           </Link>
           <Button
             danger
+            size="small"
             type="text"
             icon={<DeleteOutlined />}
             aria-label={`ลบ ${record.full_name}`}
@@ -299,7 +349,7 @@ export function RecipientList({
         </Form>
       </div>
       <section className="section-card !p-0 overflow-hidden">
-        <div className="p-5 flex items-center gap-3 border-b border-[#e5ebe7]">
+        <div className="px-4 py-3 flex items-center gap-3 border-b border-[#e5ebe7]">
           <TeamOutlined className="text-[#176854] text-xl" />
           <h2 className="font-semibold">รายชื่อผู้รับธรรมะ</h2>
           <Tag bordered={false} color="green">
@@ -307,6 +357,9 @@ export function RecipientList({
           </Tag>
         </div>
         <Table<DharmaRecipient>
+          className="recipient-table"
+          size="small"
+          tableLayout="fixed"
           onChange={(_, __, sorter, extra) => {
             if (extra.action !== "sort") return;
             const selected = Array.isArray(sorter) ? sorter[0] : sorter;
@@ -325,7 +378,12 @@ export function RecipientList({
           columns={columns}
           dataSource={data}
           loading={pending}
-          scroll={{ x: 2330 }}
+          scroll={{
+            x: columns.reduce(
+              (sum, column) => sum + Number(column.width ?? 0),
+              0,
+            ),
+          }}
           locale={{
             emptyText:
               filters.q || filters.level || filters.from
@@ -350,7 +408,7 @@ export function RecipientList({
           }}
         />
         <div className="px-5 pb-4 text-xs text-gray-400">
-          เลื่อนตารางในแนวนอนเพื่อดูข้อมูลและปุ่มจัดการทั้งหมด
+          เลื่อนเพื่อดูคอลัมน์เพิ่มเติม หรือกดชื่อเพื่อดูข้อมูลเต็ม
         </div>
       </section>
       <Modal
