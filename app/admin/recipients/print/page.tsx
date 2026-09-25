@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getPrintRecipients, type ListFilters } from "@/lib/recipients";
-import { formatDate, formatMoney } from "@/lib/format";
+import { formatDate, formatMoney, formatTimeRange } from "@/lib/format";
 import { PrintButton } from "@/components/recipients/print-button";
 export default async function PrintPage({
   searchParams,
@@ -20,6 +20,7 @@ export default async function PrintPage({
     "อาจารย์รับรอง",
     "อาจารย์ถ่ายทอดเบิกธรรม",
     "วันที่รับธรรม",
+    "ช่วงเวลาที่รับธรรม",
     "สร้างบุญ (บาท)",
     "ชั้น",
     "ระดับ",
@@ -74,6 +75,7 @@ export default async function PrintPage({
                   r.certified_by,
                   r.transmitted_by,
                   formatDate(r.received_date),
+                  formatTimeRange(r.received_time, r.received_end_time),
                   formatMoney(r.merit_amount),
                   r.class_name,
                   r.level,

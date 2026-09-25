@@ -29,7 +29,7 @@ import {
 import dayjs, { type Dayjs } from "dayjs";
 import type { DharmaRecipient } from "@/types/recipient";
 import type { ListFilters } from "@/lib/recipients";
-import { formatDate, formatMoney } from "@/lib/format";
+import { formatDate, formatMoney, formatTimeRange } from "@/lib/format";
 import { deleteRecipient } from "@/app/actions";
 interface SearchValues {
   q?: string;
@@ -178,6 +178,12 @@ export function RecipientList({
       showSorterTooltip: { title: "เรียงวันที่เก่าสุด / ล่าสุด" },
       width: 115,
       render: formatDate,
+    },
+    {
+      title: "ช่วงเวลาที่รับธรรม",
+      dataIndex: "received_time",
+      width: 110,
+      render: (_, r) => formatTimeRange(r.received_time, r.received_end_time),
     },
     {
       title: "สร้างบุญ (บาท)",

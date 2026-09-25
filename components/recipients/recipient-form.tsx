@@ -1,5 +1,9 @@
 "use client";
 import { BuddhistDatePicker as DatePicker } from "@/components/shared/buddhist-date-picker";
+import {
+  TimeRangeSelect,
+  type TimeRangeValue,
+} from "@/components/recipients/time-range-select";
 import { AddressInput } from "@/components/recipients/address-input";
 import { useState, useTransition } from "react";
 import Link from "next/link";
@@ -11,8 +15,12 @@ import { saveRecipient } from "@/app/actions";
 import type { DharmaRecipient, RecipientInput } from "@/types/recipient";
 import { OptionSelect } from "@/components/recipients/option-select";
 import type { RegistryOption } from "@/types/options";
-type Values = Omit<RecipientInput, "received_date"> & {
+type Values = Omit<
+  RecipientInput,
+  "received_date" | "received_time" | "received_end_time"
+> & {
   received_date?: Dayjs | null;
+  received_time_range?: TimeRangeValue;
 };
 export function RecipientForm({
   recipient,
@@ -39,6 +47,8 @@ export function RecipientForm({
       certified_by: nullable(values.certified_by),
       transmitted_by: nullable(values.transmitted_by),
       received_date: values.received_date?.format("YYYY-MM-DD") ?? null,
+      received_time: nullable(values.received_time_range?.start),
+      received_end_time: nullable(values.received_time_range?.end),
       merit_amount: values.merit_amount ?? null,
       class_name: nullable(values.class_name),
       level: nullable(values.level),
@@ -81,6 +91,10 @@ export function RecipientForm({
             recipient
               ? {
                   ...recipient,
+                  received_time_range: {
+                    start: recipient.received_time?.slice(0, 5) ?? null,
+                    end: recipient.received_end_time?.slice(0, 5) ?? null,
+                  },
                   received_date: recipient.received_date
                     ? dayjs(recipient.received_date)
                     : null,
@@ -175,6 +189,34 @@ export function RecipientForm({
                 inputReadOnly
                 placeholder="เลือกวันที่รับธรรม"
               />
+            </Form.Item>
+            <Form.Item
+              name="received_time_range"
+              label="ช่วงเวลาที่รับธรรม"
+              className="md:col-span-2"
+              rules={[
+                {
+                  validator: (_, value?: TimeRangeValue) => {
+                    if (Boolean(value?.start) !== Boolean(value?.end)) {
+                      return Promise.reject(
+                        new Error("กรุณาระบุเวลาเริ่มและเวลาสิ้นสุดให้ครบ"),
+                      );
+                    }
+                    if (
+                      value?.start &&
+                      value?.end &&
+                      value.end <= value.start
+                    ) {
+                      return Promise.reject(
+                        new Error("เวลาสิ้นสุดต้องหลังเวลาเริ่มในวันเดียวกัน"),
+                      );
+                    }
+                    return Promise.resolve();
+                  },
+                },
+              ]}
+            >
+              <TimeRangeSelect disabled={busy} />
             </Form.Item>
             <Form.Item
               name="merit_amount"

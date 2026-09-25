@@ -10,6 +10,8 @@ export interface DharmaRecipient {
   certified_by: string | null;
   transmitted_by: string | null;
   received_date: string | null;
+  received_time: string | null;
+  received_end_time: string | null;
   merit_amount: number | null;
   class_name: string | null;
   level: string | null;

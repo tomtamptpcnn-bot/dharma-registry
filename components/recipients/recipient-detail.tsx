@@ -3,7 +3,12 @@ import Link from "next/link";
 import { Button, Descriptions, Tag } from "antd";
 import { ArrowLeftOutlined, EditOutlined } from "@ant-design/icons";
 import type { DharmaRecipient } from "@/types/recipient";
-import { formatDate, formatMoney } from "@/lib/format";
+import {
+  formatDateTime,
+  formatDate,
+  formatMoney,
+  formatTimeRange,
+} from "@/lib/format";
 export function RecipientDetail({
   recipient: r,
 }: {
@@ -20,6 +25,10 @@ export function RecipientDetail({
     ["อาจารย์ถ่ายทอดเบิกธรรม", r.transmitted_by],
     ["วันที่รับธรรม", formatDate(r.received_date)],
     [
+      "ช่วงเวลาที่รับธรรม",
+      formatTimeRange(r.received_time, r.received_end_time),
+    ],
+    [
       "สร้างบุญ",
       r.merit_amount === null ? null : `${formatMoney(r.merit_amount)} บาท`,
     ],
@@ -27,8 +36,8 @@ export function RecipientDetail({
     ["ระดับ", r.level ? <Tag color="green">{r.level}</Tag> : null],
     ["สถานที่รับธรรม", r.received_place],
     ["รหัสทะเบียน", r.id],
-    ["วันที่สร้างข้อมูล", formatDate(r.created_at)],
-    ["วันที่แก้ไขล่าสุด", formatDate(r.updated_at)],
+    ["วันเวลาที่สร้างข้อมูล", formatDateTime(r.created_at)],
+    ["วันเวลาที่แก้ไขล่าสุด", formatDateTime(r.updated_at)],
   ];
   return (
     <>

@@ -6,7 +6,7 @@ import { PlusOutlined, TeamOutlined } from "@ant-design/icons";
 import type { DashboardStats } from "@/lib/dashboard-stats";
 import type { DharmaRecipient } from "@/types/recipient";
 import { optionLabels } from "@/types/options";
-import { formatDate, formatMoney } from "@/lib/format";
+import { formatDateTime, formatDate, formatMoney } from "@/lib/format";
 type Recent = Pick<
   DharmaRecipient,
   "id" | "full_name" | "received_date" | "received_place" | "created_at"
@@ -307,7 +307,7 @@ export function DashboardOverview({
               <div className="text-sm text-gray-500">
                 วันที่รับธรรม {formatDate(r.received_date)}
                 <p className="text-xs mt-2">
-                  เพิ่มเมื่อ {formatDate(r.created_at)}
+                  เพิ่มเมื่อ {formatDateTime(r.created_at)}
                 </p>
               </div>
             </Link>
