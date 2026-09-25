@@ -97,6 +97,7 @@ export function RecipientList({
   const columns: TableColumnsType<DharmaRecipient> = [
     {
       title: "ลำดับ",
+      align: "center",
       width: 54,
       render: (_, __, index) => (page - 1) * pageSize + index + 1,
     },
@@ -119,6 +120,7 @@ export function RecipientList({
     {
       title: "อายุ",
       dataIndex: "age",
+      align: "center",
       width: 54,
       ellipsis: true,
       render: text,
@@ -195,13 +197,26 @@ export function RecipientList({
     {
       title: "ชั้น",
       dataIndex: "class_name",
+      align: "center",
       width: 80,
       ellipsis: true,
-      render: text,
+      render: (value: string | null) =>
+        value ? (
+          <Tag
+            className="max-w-full truncate !me-0"
+            title={value}
+            color="green"
+          >
+            {value}
+          </Tag>
+        ) : (
+          "—"
+        ),
     },
     {
       title: "ระดับ",
       dataIndex: "level",
+      align: "center",
       width: 80,
       ellipsis: true,
       render: (value: string | null) =>

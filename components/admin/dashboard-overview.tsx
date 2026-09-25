@@ -208,7 +208,13 @@ export function DashboardOverview({
                   }}
                   locale={{ emptyText: "ยังไม่มีข้อมูลในหมวดนี้" }}
                   columns={[
-                    { title: optionLabels[group.category], dataIndex: "name" },
+                    {
+                      title: optionLabels[group.category],
+                      dataIndex: "name",
+                      align: ["class_name", "level"].includes(group.category)
+                        ? "center"
+                        : "left",
+                    },
                     {
                       title: "จำนวน (คน)",
                       dataIndex: "count",

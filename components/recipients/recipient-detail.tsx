@@ -71,7 +71,7 @@ export function RecipientDetail({
               </span>
             ),
             span: ["ที่อยู่", "สถานที่รับธรรม", "รหัสทะเบียน"].includes(label)
-              ? 2
+              ? "filled"
               : 1,
           }))}
         />

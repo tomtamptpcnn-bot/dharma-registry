@@ -26,6 +26,12 @@ export default async function PrintPage({
     "ระดับ",
     "สถานที่รับธรรม",
   ];
+  const columnAlignment = (header: string) =>
+    ["ลำดับ", "อายุ", "ชั้น", "ระดับ"].includes(header)
+      ? "text-center"
+      : header === "สร้างบุญ (บาท)"
+        ? "text-right"
+        : undefined;
   return (
     <main className="print-report p-4 md:p-8 bg-white min-h-screen">
       <div className="print-controls flex flex-wrap gap-4 items-center mb-6">
@@ -57,7 +63,9 @@ export default async function PrintPage({
           <thead>
             <tr>
               {headers.map((h) => (
-                <th key={h}>{h}</th>
+                <th key={h} className={columnAlignment(h)}>
+                  {h}
+                </th>
               ))}
             </tr>
           </thead>
@@ -81,7 +89,9 @@ export default async function PrintPage({
                   r.level,
                   r.received_place,
                 ].map((value, j) => (
-                  <td key={j}>{value ?? "—"}</td>
+                  <td key={j} className={columnAlignment(headers[j])}>
+                    {value ?? "—"}
+                  </td>
                 ))}
               </tr>
             ))}
