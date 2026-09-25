@@ -8,7 +8,10 @@ export type TimeRangeValue = {
   end: string | null;
 };
 
-const presets = [{ label: "13:00–15:00", value: "13:00–15:00" }];
+const presets = [
+  { label: "09:00–12:00", value: "09:00–12:00" },
+  { label: "13:00–15:00", value: "13:00–15:00" },
+];
 
 export function TimeRangeSelect({
   value,
