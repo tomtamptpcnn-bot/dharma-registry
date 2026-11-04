@@ -20,7 +20,7 @@ export function LoginForm({ configured }: { configured: boolean }) {
       const result = await login(values);
       if (result?.error) setError(result.error);
       else if (result?.success) {
-        router.replace("/admin/recipients");
+        router.replace("/admin/dashboard");
         router.refresh();
       }
     } catch {
