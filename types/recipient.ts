@@ -99,7 +99,7 @@ export interface Database {
       manage_dharma_temple: {
         Args: {
           target_temple_id: string;
-          operation: "rename";
+          operation: "rename" | "delete";
           new_name: string | null;
           new_caretaker_name: string | null;
         };

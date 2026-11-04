@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { App, Button, Input, Modal, Table, Tooltip } from "antd";
-import { EditOutlined, KeyOutlined, PlusOutlined, SyncOutlined } from "@ant-design/icons";
+import { DeleteOutlined, EditOutlined, KeyOutlined, PlusOutlined, SyncOutlined } from "@ant-design/icons";
 import { createTemple, manageTemple, migrateLegacyManagerEmails, resetTempleManagerPassword } from "@/app/admin/temples/actions";
 
 type Temple = { id: string; name: string; caretaker_name: string; manager_username: string; created_at: string };
@@ -38,6 +38,29 @@ export function TempleManager({ temples }: { temples: Temple[] }) {
     message.success("แก้ไขข้อมูลสถานธรรมแล้ว");
     setEditing(null);
     window.location.reload();
+  }
+  function deleteTemple(temple: Temple) {
+    Modal.confirm({
+      title: `ลบสถานธรรม ${temple.name}?`,
+      content: "ลบได้เฉพาะสาขาที่ยังไม่มีทะเบียนผู้รับธรรมะ รายการตัวเลือกและสิทธิ์ผู้ดูแลของสาขานี้จะถูกลบด้วย บัญชี Auth จะยังอยู่แต่จะไม่มีสิทธิ์เข้าใช้ระบบ",
+      okText: "ลบสถานธรรม",
+      okButtonProps: { danger: true },
+      cancelText: "ยกเลิก",
+      onOk: async () => {
+        setBusy(true);
+        try {
+          const result = await manageTemple({ id: temple.id, operation: "delete" });
+          if (result.error) {
+            message.error(result.error);
+            return;
+          }
+          message.success(`ลบสถานธรรม ${temple.name} แล้ว`);
+          window.location.reload();
+        } finally {
+          setBusy(false);
+        }
+      },
+    });
   }
   async function resetPassword() {
     if (!resetting || busy) return;
@@ -83,7 +106,7 @@ export function TempleManager({ temples }: { temples: Temple[] }) {
       </div>
       <Button type="primary" icon={<PlusOutlined />} loading={busy} onClick={add}>สร้างสถานธรรมและบัญชีผู้ดูแล</Button>
     </div>
-    <div className="section-card"><Table rowKey="id" dataSource={temples} pagination={false} columns={[{ title: "ชื่อสถานธรรม", dataIndex: "name" }, { title: "ผู้ดูแล", dataIndex: "caretaker_name", render: (value: string) => value || "—" }, { title: "Username", dataIndex: "manager_username", render: (value: string) => value || "—" }, { title: "รหัสสาขา", dataIndex: "id" }, { title: "จัดการ", key: "actions", width: 120, render: (_, temple: Temple) => <div className="flex gap-1"><Tooltip title="แก้ไขข้อมูลสถานธรรม"><Button aria-label={`แก้ไข ${temple.name}`} icon={<EditOutlined />} onClick={() => { setEditing(temple); setEditName(temple.name); setEditManager(temple.caretaker_name); }} /></Tooltip><Tooltip title="รีเซ็ตรหัสผ่าน"><Button aria-label={`รีเซ็ตรหัสผ่าน ${temple.name}`} icon={<KeyOutlined />} onClick={() => { setResetting(temple); setNewPassword(""); }} /></Tooltip></div> }]} /></div>
+    <div className="section-card"><Table rowKey="id" dataSource={temples} pagination={false} columns={[{ title: "ชื่อสถานธรรม", dataIndex: "name" }, { title: "ผู้ดูแล", dataIndex: "caretaker_name", render: (value: string) => value || "—" }, { title: "Username", dataIndex: "manager_username", render: (value: string) => value || "—" }, { title: "รหัสสาขา", dataIndex: "id" }, { title: "จัดการ", key: "actions", width: 160, render: (_, temple: Temple) => <div className="flex gap-1"><Tooltip title="แก้ไขข้อมูลสถานธรรม"><Button aria-label={`แก้ไข ${temple.name}`} icon={<EditOutlined />} onClick={() => { setEditing(temple); setEditName(temple.name); setEditManager(temple.caretaker_name); }} /></Tooltip><Tooltip title="รีเซ็ตรหัสผ่าน"><Button aria-label={`รีเซ็ตรหัสผ่าน ${temple.name}`} icon={<KeyOutlined />} onClick={() => { setResetting(temple); setNewPassword(""); }} /></Tooltip><Tooltip title="ลบได้เฉพาะสาขาที่ยังไม่มีทะเบียน"><Button danger aria-label={`ลบสถานธรรม ${temple.name}`} icon={<DeleteOutlined />} loading={busy} onClick={() => deleteTemple(temple)} /></Tooltip></div> }]} /></div>
     <Modal title="แก้ไขข้อมูลสถานธรรม" open={!!editing} onCancel={() => setEditing(null)} onOk={saveEdit} confirmLoading={busy} okText="บันทึก" cancelText="ยกเลิก">
       <div className="grid gap-4 pt-4">
         <Input aria-label="ชื่อสถานธรรม" value={editName} onChange={(event) => setEditName(event.target.value)} placeholder="ชื่อสถานธรรม" maxLength={200} />

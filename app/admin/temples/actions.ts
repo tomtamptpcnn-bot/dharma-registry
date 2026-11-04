@@ -82,6 +82,7 @@ export async function manageTemple(input: unknown) {
       name: z.string().trim().min(1, "กรุณาระบุชื่อสถานธรรม").max(200),
       caretakerName: z.string().trim().min(1, "กรุณาระบุชื่อผู้ดูแล").max(200),
     }),
+    z.object({ id: z.uuid(), operation: z.literal("delete") }),
   ]).safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const { error } = await supabase.rpc("manage_dharma_temple", {
@@ -93,6 +94,8 @@ export async function manageTemple(input: unknown) {
   if (error) {
     if (error.code === "P0002") return { error: "ไม่พบสถานธรรม อาจถูกลบไปแล้ว" };
     if (error.code === "23505") return { error: "มีชื่อสถานธรรมนี้แล้ว" };
+    if (error.code === "23503") return { error: "ลบสถานธรรมไม่ได้ เพราะยังมีทะเบียนผู้รับธรรมะอยู่" };
+    if (error.code === "55000") return { error: "ต้องเหลือสถานธรรมอย่างน้อยหนึ่งแห่งในระบบ" };
     return { error: "จัดการสถานธรรมไม่สำเร็จ" };
   }
   revalidatePath("/admin/temples");
