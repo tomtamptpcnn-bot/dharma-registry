@@ -366,6 +366,8 @@ export function OptionsManager({
             pageSize: 10,
             showSizeChanger: false,
             hideOnSinglePage: true,
+            showTotal: (count, range) =>
+              `${count === 0 ? 0 : range[0]}–${range[1]} จาก ${count} รายการ`,
           }}
           locale={{
             emptyText: query
