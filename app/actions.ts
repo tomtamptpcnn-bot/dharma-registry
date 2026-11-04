@@ -82,7 +82,7 @@ export async function login(values: unknown) {
   } catch {
     return { error: "ไม่สามารถเชื่อมต่อระบบได้ กรุณาลองอีกครั้ง" };
   }
-  redirect("/admin/recipients");
+  return { success: true };
 }
 export async function logout() {
   const { supabase, access } = await requireUser();

@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Alert, Button, Form, Input } from "antd";
 import {
   SafetyCertificateOutlined,
@@ -9,6 +10,7 @@ import {
 } from "@ant-design/icons";
 import { login } from "@/app/actions";
 export function LoginForm({ configured }: { configured: boolean }) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   async function submit(values: { username: string; password: string }) {
@@ -17,6 +19,10 @@ export function LoginForm({ configured }: { configured: boolean }) {
     try {
       const result = await login(values);
       if (result?.error) setError(result.error);
+      else if (result?.success) {
+        router.replace("/admin/recipients");
+        router.refresh();
+      }
     } catch {
       setError("ไม่สามารถเชื่อมต่อระบบได้ กรุณาลองอีกครั้ง");
     } finally {
