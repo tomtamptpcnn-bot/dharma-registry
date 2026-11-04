@@ -11,6 +11,7 @@ export function TempleManager({ temples }: { temples: Temple[] }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<Temple | null>(null);
   const [editName, setEditName] = useState("");
   const [editManager, setEditManager] = useState("");
@@ -106,7 +107,9 @@ export function TempleManager({ temples }: { temples: Temple[] }) {
       </div>
       <Button type="primary" icon={<PlusOutlined />} loading={busy} onClick={add}>สร้างสถานธรรมและบัญชีผู้ดูแล</Button>
     </div>
-    <div className="section-card"><Table rowKey="id" dataSource={temples} pagination={false} columns={[{ title: "ชื่อสถานธรรม", dataIndex: "name" }, { title: "ผู้ดูแล", dataIndex: "caretaker_name", render: (value: string) => value || "—" }, { title: "Username", dataIndex: "manager_username", render: (value: string) => value || "—" }, { title: "ทะเบียน", dataIndex: "recipient_count", align: "right", sorter: (a: Temple, b: Temple) => a.recipient_count - b.recipient_count, render: (count: number) => `${count.toLocaleString("th-TH")} รายการ` }, { title: "สร้างบุญรวม", dataIndex: "total_merit", align: "right", sorter: (a: Temple, b: Temple) => a.total_merit - b.total_merit, render: (amount: number) => `${amount.toLocaleString("th-TH", { maximumFractionDigits: 2 })} บาท` }, { title: "จัดการ", key: "actions", width: 160, render: (_, temple: Temple) => {
+    <div className="section-card">
+      <Input.Search aria-label="ค้นหาสถานธรรม" placeholder="ค้นหาชื่อสถานธรรม ผู้ดูแล หรือ Username" allowClear value={search} onChange={(event) => setSearch(event.target.value)} className="mb-4 max-w-md" />
+      <Table rowKey="id" dataSource={[...temples].filter((temple) => [temple.name, temple.caretaker_name, temple.manager_username].some((value) => value.toLocaleLowerCase("th").includes(search.trim().toLocaleLowerCase("th")))).sort((a, b) => a.name.localeCompare(b.name, "th"))} pagination={{ pageSize: 10, showSizeChanger: true, showTotal: (total, range) => `${range[0]}–${range[1]} จาก ${total} รายการ` }} columns={[{ title: "ชื่อสถานธรรม", dataIndex: "name", sorter: (a: Temple, b: Temple) => a.name.localeCompare(b.name, "th") }, { title: "ผู้ดูแล", dataIndex: "caretaker_name", render: (value: string) => value || "—" }, { title: "Username", dataIndex: "manager_username", render: (value: string) => value || "—" }, { title: "ทะเบียน", dataIndex: "recipient_count", align: "right", sorter: (a: Temple, b: Temple) => a.recipient_count - b.recipient_count, render: (count: number) => `${count.toLocaleString("th-TH")} รายการ` }, { title: "สร้างบุญรวม", dataIndex: "total_merit", align: "right", sorter: (a: Temple, b: Temple) => a.total_merit - b.total_merit, render: (amount: number) => `${amount.toLocaleString("th-TH", { maximumFractionDigits: 2 })} บาท` }, { title: "จัดการ", key: "actions", width: 160, render: (_, temple: Temple) => {
       const canDelete = temple.recipient_count === 0 && temples.length > 1;
       const deleteTooltip = temple.recipient_count > 0
         ? `ลบไม่ได้ มีทะเบียนผู้รับธรรมะ ${temple.recipient_count.toLocaleString("th-TH")} รายการ`
