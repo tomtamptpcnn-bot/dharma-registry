@@ -86,7 +86,7 @@ export function LoginForm({ configured }: { configured: boolean }) {
               <Input
                 prefix={<UserOutlined className="text-gray-400 mr-2" />}
                 autoComplete="username"
-                placeholder="เช่น tomtam หรือ tomtam@dharma.com"
+                placeholder="username"
                 autoCapitalize="none"
                 spellCheck={false}
                 maxLength={32}
