@@ -28,9 +28,13 @@ const monthNames = [
 export function DashboardOverview({
   stats,
   recent,
+  temples = [],
+  selectedTempleId,
 }: {
   stats: DashboardStats;
   recent: Recent[];
+  temples?: { id: string; name: string }[];
+  selectedTempleId?: string;
 }) {
   const [year, setYear] = useState(stats.today.slice(0, 4));
   const months = stats.monthly.find((item) => item.year === year)?.months ?? [];
@@ -72,6 +76,19 @@ export function DashboardOverview({
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
+          {temples.length > 0 && (
+            <Select
+              aria-label="เลือกสถานธรรม"
+              showSearch
+              optionFilterProp="label"
+              value={selectedTempleId ?? "all"}
+              onChange={(value) => {
+                window.location.href = value === "all" ? "/admin/dashboard" : `/admin/dashboard?temple=${value}`;
+              }}
+              className="min-w-52"
+              options={[{ value: "all", label: "ทุกสถานธรรม" }, ...[...temples].sort((a, b) => a.name.localeCompare(b.name, "th")).map((temple) => ({ value: temple.id, label: temple.name }))]}
+            />
+          )}
           <Link href="/admin/recipients">
             <Button icon={<TeamOutlined />}>ดูทะเบียนทั้งหมด</Button>
           </Link>
@@ -106,6 +123,8 @@ export function DashboardOverview({
           </div>
           <Select
             aria-label="เลือกปีของสถิติ"
+            showSearch
+            optionFilterProp="label"
             value={year}
             onChange={setYear}
             className="min-w-40"

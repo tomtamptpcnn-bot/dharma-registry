@@ -1,8 +1,8 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { App, Avatar, Button, Drawer, Menu } from "antd";
+import { usePathname, useRouter } from "next/navigation";
+import { App, Avatar, Button, Drawer, Menu, Tooltip } from "antd";
 import {
   BookOutlined,
   DashboardOutlined,
@@ -11,24 +11,48 @@ import {
   MenuOutlined,
   UserOutlined,
   SafetyCertificateOutlined,
+  HistoryOutlined,
 } from "@ant-design/icons";
 import { logout } from "@/app/actions";
 export function AdminShell({
   children,
   email,
+  role,
+  templeName,
+  displayName,
 }: {
   children: React.ReactNode;
   email: string;
+  role: string;
+  templeName: string | null;
+  displayName: string;
 }) {
   const path = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const { message } = App.useApp();
+  const selectedMenuKey = path.startsWith("/admin/dashboard") || path === "/admin"
+    ? "dashboard"
+    : path.startsWith("/admin/recipients")
+      ? "recipients"
+      : path.startsWith("/admin/options")
+        ? "options"
+        : path.startsWith("/admin/temples")
+          ? "temples"
+          : path.startsWith("/admin/logs")
+            ? "logs"
+            : "";
   async function signOut() {
     setBusy(true);
     try {
       const result = await logout();
-      if (result?.error) message.error(result.error);
+      if (result?.error) {
+        message.error(result.error);
+        return;
+      }
+      router.replace("/login");
+      router.refresh();
     } catch {
       message.error("ออกจากระบบไม่สำเร็จ กรุณาลองอีกครั้ง");
     } finally {
@@ -51,21 +75,10 @@ export function AdminShell({
       <div className="text-[11px] text-gray-400 px-7 mb-3">เมนูหลัก</div>
       <Menu
         mode="inline"
-        selectedKeys={[
-          path.startsWith("/admin/options")
-            ? "options"
-            : path.startsWith("/admin/dashboard")
-              ? "dashboard"
-              : "recipients",
-        ]}
+        selectedKeys={selectedMenuKey ? [selectedMenuKey] : []}
         onClick={() => setOpen(false)}
         style={{ border: 0, padding: "0 12px" }}
         items={[
-          {
-            key: "options",
-            icon: <BookOutlined />,
-            label: <Link href="/admin/options">จัดการข้อมูลตัวเลือก</Link>,
-          },
           {
             key: "dashboard",
             icon: <DashboardOutlined />,
@@ -75,6 +88,21 @@ export function AdminShell({
             key: "recipients",
             icon: <TeamOutlined />,
             label: <Link href="/admin/recipients">ทะเบียนผู้รับธรรมะ</Link>,
+          },
+          {
+            key: "options",
+            icon: <BookOutlined />,
+            label: <Link href="/admin/options">จัดการข้อมูลตัวเลือก</Link>,
+          },
+          ...(role === "super_admin" ? [{
+            key: "temples",
+            icon: <SafetyCertificateOutlined />,
+            label: <Link href="/admin/temples">จัดการสถานธรรม</Link>,
+          }] : []),
+          {
+            key: "logs",
+            icon: <HistoryOutlined />,
+            label: <Link href="/admin/logs">ประวัติกิจกรรม</Link>,
           },
         ]}
       />
@@ -112,20 +140,22 @@ export function AdminShell({
       <div className="lg:ml-[250px]">
         <header className="h-20 bg-white border-b border-[#e5ebe7] px-5 md:px-9 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <Button
-              className="lg:!hidden"
-              type="text"
-              icon={<MenuOutlined />}
-              aria-label="เปิดเมนู"
-              onClick={() => setOpen(true)}
-            />
+            <Tooltip title="เปิดเมนู">
+              <Button
+                className="lg:!hidden"
+                type="text"
+                icon={<MenuOutlined />}
+                aria-label="เปิดเมนู"
+                onClick={() => setOpen(true)}
+              />
+            </Tooltip>
             <span className="font-semibold text-sm md:text-base">
-              ทะเบียนประวัติผู้รับธรรมะ
+              ทะเบียนประวัติผู้รับธรรมะ{templeName ? ` (${templeName})` : ""}
             </span>
           </div>
           <div className="flex items-center gap-3">
             <div className="text-right hidden sm:block">
-              <div className="text-xs font-semibold">ผู้ดูแลระบบ</div>
+              <div className="text-xs font-semibold">{displayName || (role === "super_admin" ? "ผู้ดูแลระบบ" : "ผู้ดูแลสถานธรรม")}</div>
               <div className="text-xs text-gray-400 mt-1 max-w-48 truncate">
                 {email}
               </div>

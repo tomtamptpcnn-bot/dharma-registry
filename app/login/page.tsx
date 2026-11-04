@@ -10,7 +10,9 @@ export default async function LoginPage() {
     const {
       data: { user },
     } = await client.auth.getUser();
-    if (user && !user.is_anonymous) redirect("/admin/recipients");
+    if (user && !user.is_anonymous) {
+      redirect("/admin/recipients");
+    }
   }
   return <LoginForm configured={configured} />;
 }

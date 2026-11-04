@@ -20,4 +20,5 @@ export type RegistryOption = {
   category: OptionCategory;
   value: string;
   created_at: string;
+  temple_id?: string;
 };

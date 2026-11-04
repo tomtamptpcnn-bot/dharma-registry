@@ -32,7 +32,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-key
 6. ตั้ง Authentication → URL Configuration → Site URL เป็น `http://localhost:3000` ขณะพัฒนา และโดเมน HTTPS จริงเมื่อขึ้นระบบ
 7. รีสตาร์ต `npm run dev` แล้วเข้า `/login` ด้วยบัญชี Admin ที่สร้างไว้
 
-**ห้ามใส่ service_role key ใน environment ฝั่ง browser** แอปนี้ไม่ต้องใช้ service_role key และไม่เก็บ key ใน source code
+**ห้ามใส่ service role/secret key ใน environment ฝั่ง browser** การใช้งานทั่วไปไม่ต้องใช้คีย์นี้ แต่ฟีเจอร์สร้างบัญชีผู้ดูแลสาขาและรีเซ็ตรหัสผ่านต้องตั้ง `SUPABASE_SERVICE_ROLE_KEY` ฝั่ง server ตามหัวข้อหลายสถานธรรม ห้ามเก็บคีย์ใน source code
 
 ## การใช้งาน
 
@@ -111,9 +111,36 @@ npm start
 
 หน้า Login ใช้ชื่อผู้ใช้ เช่น `chaiya` และรหัสผ่าน ชื่อผู้ใช้ยาว 3–32 ตัว รองรับภาษาอังกฤษ ตัวเลข และ `._-` ไม่แยกตัวพิมพ์ใหญ่เล็ก
 
-บัญชีใหม่ให้สร้างใน Supabase Dashboard ด้วยอีเมลภายใน `ชื่อผู้ใช้@admin.example.com` และเลือก Auto Confirm ไม่ต้องใช้อีเมลจริง โดเมนนี้เป็นชื่ออ้างอิงเท่านั้น จึงรับอีเมลยืนยันหรือรีเซ็ตรหัสผ่านไม่ได้ ผู้ดูแลต้องจัดการบัญชีผ่าน Dashboard
+บัญชีใหม่ใช้รูปแบบอีเมลภายใน `ชื่อผู้ใช้@dharma.com` และเลือก Auto Confirm ไม่ต้องใช้อีเมลที่รับข้อความได้ ระบบจะสร้างบัญชีผู้ดูแลสาขาให้จากเมนูจัดการสถานธรรม ส่วนบัญชี Super Admin ให้สร้างใน Supabase Dashboard ด้วยอีเมลรูปแบบเดียวกัน โดเมนนี้ใช้เป็นชื่ออ้างอิงสำหรับล็อกอิน ไม่ได้รับอีเมลยืนยันหรือรีเซ็ตรหัสผ่าน
 
-บัญชีเดิมใช้ต่อได้ด้วย `AUTH_USERNAME_EMAIL_MAP` ใน `.env.local` เป็น JSON mapping ชื่อผู้ใช้ตัวพิมพ์เล็กไปยังอีเมลบัญชีเดิม ดูตัวอย่างใน `.env.example` ค่านี้ใช้เฉพาะฝั่ง server ห้ามเติม `NEXT_PUBLIC_` การตั้งชื่อผู้ใช้ไม่ได้ข้ามการยืนยันบัญชี ต้องยืนยันบัญชีเดิมให้เรียบร้อย แล้วรีสตาร์ต dev server หรือ build ใหม่สำหรับ production
+ทุกบัญชีใช้รูปแบบอีเมล Auth `ชื่อผู้ใช้@dharma.com` สำหรับเข้าสู่ระบบ หากมีบัญชีเดิมที่ใช้อีเมลอื่น ให้ Super Admin เปิดเมนูจัดการสถานธรรมแล้วกด **ย้ายทุกบัญชีเป็น @dharma.com** ระบบจะเปลี่ยนอีเมล Auth ของบัญชีที่ผูกกับผู้ใช้ทั้งหมด รวมถึงบัญชีที่ใช้อีเมลจริง โดยคง UUID รหัสผ่าน และสิทธิ์ไว้ บัญชีที่ชื่อผู้ใช้ไม่ถูกต้องหรือมีอีเมลปลายทางซ้ำจะถูกรายงานว่าข้าม
+
+## หลายสถานธรรมและ Super Admin
+
+รัน `supabase/migrations/202611040001_multibranch_superadmin.sql` ใน Supabase SQL Editor หลัง migration เดิมทั้งหมด ข้อมูลทะเบียนและตัวเลือกที่มีอยู่จะถูกผูกกับ **สถานธรรมแก่นโพธิ์** และบัญชี Auth ที่มีอยู่จะได้รับสิทธิ์ `temple_admin` ของสาขานี้โดยอัตโนมัติ จากนั้นรัน migrations `202611040002_temple_caretaker.sql` ถึง `202611040008_activity_logs.sql` ตามลำดับ เพื่อเพิ่มข้อมูลผู้ดูแล username แยกตัวเลือกตามสถานธรรม ยกเลิกสถานะระงับ และบันทึกประวัติกิจกรรม ระบบไม่มีสถานะระงับสาขา
+
+เมนู **ประวัติกิจกรรม** บันทึกการเข้าสู่/ออกจากระบบ การเพิ่ม แก้ไข และลบทะเบียน ตัวเลือก และสถานธรรม รวมถึงการสร้างบัญชีผู้ดูแลและรีเซ็ตรหัสผ่าน Super Admin ดูได้ทุกสาขา ส่วนผู้ดูแลสาขาดูได้เฉพาะกิจกรรมของสาขาตนเอง
+
+บทบาทบัญชีแยกกัน: `super-admin` เป็น `super_admin` และมี `temple_id = null` เพื่อดูแลทุกสาขา ส่วน `tomtamptpcnn` ยังคงเป็น `temple_admin` ของสถานธรรมแก่นโพธิ์ หากบัญชีนี้มีอยู่ก่อนรัน migration 001 ระบบจะผูกให้สาขาแก่นโพธิ์อัตโนมัติ อย่าเปลี่ยน role ของบัญชีนี้เป็น `super_admin`
+
+เพื่อให้ Super Admin สร้างสาขาพร้อมบัญชีผู้ดูแลได้ ให้ตั้ง `SUPABASE_SERVICE_ROLE_KEY` ใน environment ฝั่ง server จาก Project Settings → API Keys เท่านั้น ห้ามใช้ prefix `NEXT_PUBLIC_` ห้ามใส่ใน Git หรือส่งให้ผู้ใช้ ตัวสร้างบัญชีใช้ Supabase Auth Admin API ฝั่ง server เพื่อสร้างบัญชีแบบยืนยันอีเมลแล้ว พร้อมสร้างสิทธิ์ `temple_admin` และบันทึกชื่อผู้ดูแลในสาขา
+
+สร้างบัญชี Super Admin ใน Authentication → Users → Add user → Create new user ด้วย username `superadmin` (อีเมล `superadmin@dharma.com`) ตั้งรหัสผ่านที่ปลอดภัยและเลือก Auto Confirm จากนั้นคัดลอก UUID ของบัญชีจากหน้า Users แล้วรัน SQL โดยแทน UUID:
+
+```sql
+insert into public.dharma_user_access (user_id, role, temple_id)
+values ('ใส่-UUID-บัญชี-superadmin-ตรงนี้', 'super_admin', null)
+on conflict (user_id) do update set role = excluded.role, temple_id = null;
+```
+
+เมนู **จัดการสถานธรรม** ให้กรอกชื่อสถานธรรม ชื่อผู้ดูแล username และ password เพื่อสร้างสาขาและบัญชีเจ้าหน้าที่พร้อมกัน Password ต้องยาวอย่างน้อย 8 ตัวอักษร ใช้อีเมลภายใน `username@dharma.com` สำหรับล็อกอิน รหัสผ่านส่งตรงให้ Auth และไม่ถูกเก็บในฐานข้อมูล ตารางสาขาแก้ชื่อและชื่อผู้ดูแลได้ (username เปลี่ยนไม่ได้) และมีปุ่มรีเซ็ตรหัสผ่านแยกต่างหาก บัญชีสาขาจะเห็นเฉพาะสาขาที่ผูกไว้
+
+```sql
+insert into public.dharma_user_access (user_id, role, temple_id)
+values ('UUID-บัญชีเจ้าหน้าที่', 'temple_admin', 'UUID-สถานธรรม');
+```
+
+อย่าใส่รหัสผ่านจริงใน repository หรือ migration.
 
 ## อัปเดตตัวเลือกและข้อมูลทะเบียน 14 รายการ
 

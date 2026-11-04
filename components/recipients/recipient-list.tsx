@@ -14,6 +14,7 @@ import {
   Select,
   Table,
   Tag,
+  Tooltip,
 } from "antd";
 import type { TableColumnsType } from "antd";
 import {
@@ -43,6 +44,8 @@ export function RecipientList({
   pageSize,
   filters,
   options,
+  temples,
+  canSelectTemple,
 }: {
   data: DharmaRecipient[];
   total: number;
@@ -50,6 +53,8 @@ export function RecipientList({
   pageSize: number;
   filters: ListFilters;
   options: RegistryOption[];
+  temples: { id: string; name: string }[];
+  canSelectTemple: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -66,6 +71,7 @@ export function RecipientList({
   function search(values: SearchValues) {
     navigate({
       sort: filters.sort,
+      temple: filters.temple,
       q: values.q?.trim(),
       level: values.level?.trim(),
       from: values.dates?.[0]?.format("YYYY-MM-DD"),
@@ -245,33 +251,20 @@ export function RecipientList({
       width: 112,
       render: (_, record) => (
         <Space size={2}>
-          <Link href={`/admin/recipients/${record.id}`}>
-            <Button
-              size="small"
-              type="text"
-              icon={<EyeOutlined />}
-              aria-label={`ดูรายละเอียด ${record.full_name}`}
-              title="ดูรายละเอียด"
-            />
-          </Link>
-          <Link href={`/admin/recipients/${record.id}/edit`}>
-            <Button
-              size="small"
-              type="text"
-              icon={<EditOutlined />}
-              aria-label={`แก้ไข ${record.full_name}`}
-              title="แก้ไข"
-            />
-          </Link>
-          <Button
+          <Tooltip title="ดูรายละเอียด"><Link href={`/admin/recipients/${record.id}`}>
+            <Button size="small" type="text" icon={<EyeOutlined />} aria-label={`ดูรายละเอียด ${record.full_name}`} />
+          </Link></Tooltip>
+          <Tooltip title="แก้ไขข้อมูล"><Link href={`/admin/recipients/${record.id}/edit`}>
+            <Button size="small" type="text" icon={<EditOutlined />} aria-label={`แก้ไข ${record.full_name}`} />
+          </Link></Tooltip>
+          <Tooltip title="ลบทะเบียน"><Button
             danger
             size="small"
             type="text"
             icon={<DeleteOutlined />}
             aria-label={`ลบ ${record.full_name}`}
-            title="ลบ"
             onClick={() => setTarget(record)}
-          />
+          /></Tooltip>
         </Space>
       ),
     },
@@ -296,7 +289,7 @@ export function RecipientList({
           >
             <Button icon={<PrinterOutlined />}>ส่งออก / พิมพ์</Button>
           </Link>
-          <Link href="/admin/recipients/create">
+          <Link href={filters.temple ? `/admin/recipients/create?temple=${encodeURIComponent(filters.temple)}` : "/admin/recipients/create"}>
             <Button type="primary" icon={<PlusOutlined />}>
               เพิ่มผู้รับธรรมะ
             </Button>
@@ -323,7 +316,7 @@ export function RecipientList({
                 : undefined,
           }}
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[2fr_1.5fr_1fr_auto] gap-x-4 items-end">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[2fr_1.5fr_1fr_1.2fr_auto] gap-x-4 items-end">
             <Form.Item name="q" label="ค้นหาข้อมูล">
               <Input
                 allowClear
@@ -348,9 +341,22 @@ export function RecipientList({
                 placeholder="ทุกระดับ"
                 options={options
                   .filter((o) => o.category === "level")
-                  .map((o) => ({ label: o.value, value: o.value }))}
+                  .map((o) => ({ label: o.value, value: o.value }))
+                  .sort((a, b) => a.label.localeCompare(b.label, "th"))}
               />
             </Form.Item>
+            {canSelectTemple && <Form.Item label="สถานธรรม">
+              <Select
+                showSearch
+                optionFilterProp="label"
+                value={filters.temple || "all"}
+                onChange={(temple: string) => navigate({ ...filters, temple: temple === "all" ? undefined : temple, page: "1" })}
+                options={[
+                  { value: "all", label: "ทุกสาขา" },
+                  ...[...temples].sort((a, b) => a.name.localeCompare(b.name, "th")).map((temple) => ({ value: temple.id, label: temple.name })),
+                ]}
+              />
+            </Form.Item>}
             <Form.Item>
               <Space>
                 <Button
@@ -370,12 +376,29 @@ export function RecipientList({
         </Form>
       </div>
       <section className="section-card !p-0 overflow-hidden">
-        <div className="px-4 py-3 flex items-center gap-3 border-b border-[#e5ebe7]">
+        <div className="px-4 py-3 flex flex-wrap items-center gap-3 border-b border-[#e5ebe7]">
           <TeamOutlined className="text-[#176854] text-xl" />
           <h2 className="font-semibold">รายชื่อผู้รับธรรมะ</h2>
           <Tag bordered={false} color="green">
             {total.toLocaleString("th-TH")} รายการ
           </Tag>
+          <Select
+            aria-label="เรียงลำดับตามวันที่รับธรรม"
+            showSearch
+            optionFilterProp="label"
+            className="w-full sm:!w-64 sm:ml-auto"
+            placeholder="เรียงตามวันที่รับธรรม"
+            allowClear
+            value={filters.sort || undefined}
+            onChange={(sort?: string) =>
+              navigate({ ...filters, page: "1", sort })
+            }
+            options={[
+              { value: "date_asc", label: "วันที่รับธรรม: เก่าไปใหม่" },
+              { value: "date_desc", label: "วันที่รับธรรม: ใหม่ไปเก่า" },
+            ]}
+          />
+
         </div>
         <Table<DharmaRecipient>
           className="recipient-table"

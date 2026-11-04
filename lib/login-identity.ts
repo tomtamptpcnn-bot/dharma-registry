@@ -12,11 +12,15 @@ export const loginSchema = z.object({
   password: z.string().min(1, "กรุณาระบุรหัสผ่าน"),
 });
 
-// Only call on the server. Overrides let existing accounts keep their identity.
+// Only call on the server.
 export function usernameToEmail(username: string): string {
   const normalized = loginSchema.shape.username.parse(username);
-  const aliases = z
-    .record(z.string(), z.email())
-    .parse(JSON.parse(process.env.AUTH_USERNAME_EMAIL_MAP || "{}"));
-  return aliases[normalized] ?? `${normalized}@admin.example.com`;
+  return `${normalized}@dharma.com`;
+}
+
+// Temporary bridge for accounts created before the app standardized on @dharma.com.
+export function usernameToPreviousEmail(username: string): string | null {
+  const normalized = loginSchema.shape.username.parse(username);
+  if (normalized === "tomtamptpcnn") return `${normalized}@gmail.com`;
+  return null;
 }

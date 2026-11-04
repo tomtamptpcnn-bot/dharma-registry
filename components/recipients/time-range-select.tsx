@@ -36,6 +36,8 @@ export function TimeRangeSelect({
       <Select
         id={id}
         className="w-full"
+        showSearch
+        optionFilterProp="label"
         allowClear
         disabled={disabled}
         placeholder="เลือกช่วงเวลาที่รับธรรม"

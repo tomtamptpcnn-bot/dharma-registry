@@ -11,15 +11,19 @@ export interface ListFilters {
   page?: string;
   pageSize?: string;
   sort?: string;
+  temple?: string;
 }
 function recipientQuery(
   supabase: Awaited<ReturnType<typeof requireUser>>["supabase"],
   filters: ListFilters,
+  role: string,
 ) {
   let query = supabase
     .from("dharma_recipients")
     .select("*", { count: "exact" });
   const q = safeSearch(filters.q || "");
+  if (role === "super_admin" && filters.temple && uuidSchema.safeParse(filters.temple).success)
+    query = query.eq("temple_id", filters.temple);
   if (q)
     query = query.or(
       `full_name.ilike.%${q}%,phone.ilike.%${q}%,address.ilike.%${q}%`,
@@ -38,10 +42,10 @@ function recipientQuery(
   return query.order("created_at", { ascending: false }).order("id");
 }
 export async function getPrintRecipients(filters: ListFilters) {
-  const { supabase } = await requireUser();
+  const { supabase, access } = await requireUser();
   const rows: import("@/types/recipient").DharmaRecipient[] = [];
   for (let offset = 0; ; offset += 500) {
-    const { data, error } = await recipientQuery(supabase, filters).range(
+    const { data, error } = await recipientQuery(supabase, filters, access.role).range(
       offset,
       offset + 499,
     );
@@ -52,7 +56,7 @@ export async function getPrintRecipients(filters: ListFilters) {
   return rows;
 }
 export async function listRecipients(filters: ListFilters) {
-  const { supabase } = await requireUser();
+  const { supabase, access } = await requireUser();
   const page = Math.max(
     1,
     Math.min(100000, Math.floor(Number(filters.page) || 1)),
@@ -60,7 +64,7 @@ export async function listRecipients(filters: ListFilters) {
   const pageSize = [10, 20, 50].includes(Number(filters.pageSize))
     ? Number(filters.pageSize)
     : 10;
-  const query = recipientQuery(supabase, filters);
+  const query = recipientQuery(supabase, filters, access.role);
   const { data, count, error } = await query.range(
     (page - 1) * pageSize,
     page * pageSize - 1,
@@ -83,27 +87,28 @@ export async function getRecipient(id: string) {
   if (!data) notFound();
   return data;
 }
-export async function getDashboard() {
+export async function getDashboard(templeId?: string) {
   const { supabase } = await requireUser();
   const rows: DashboardRow[] = [];
   for (let offset = 0; ; offset += 500) {
-    const { data, error } = await supabase
+    let query = supabase
       .from("dharma_recipients")
       .select(
         "age,phone,address,received_date,merit_amount,recommended_by,certified_by,transmitted_by,class_name,level,received_place",
-      )
-      .order("id")
-      .range(offset, offset + 499);
+      );
+    if (templeId) query = query.eq("temple_id", templeId);
+    const { data, error } = await query.order("id").range(offset, offset + 499);
     if (error) throw new Error("ไม่สามารถโหลดภาพรวมได้");
     rows.push(...data);
     if (data.length < 500) break;
   }
-  const { data: recent, error } = await supabase
+  let recentQuery = supabase
     .from("dharma_recipients")
     .select("id,full_name,received_date,received_place,created_at")
     .order("created_at", { ascending: false })
-    .order("id")
-    .limit(5);
+    .order("id");
+  if (templeId) recentQuery = recentQuery.eq("temple_id", templeId);
+  const { data: recent, error } = await recentQuery.limit(5);
   if (error) throw new Error("ไม่สามารถโหลดทะเบียนล่าสุดได้");
   const today = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Bangkok",

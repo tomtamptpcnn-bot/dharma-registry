@@ -12,5 +12,17 @@ export const requireUser = cache(async function requireUser() {
     error,
   } = await supabase.auth.getUser();
   if (error || !user || user.is_anonymous) redirect("/login");
-  return { supabase, user };
+  const { data: access, error: accessError } = await supabase
+    .from("dharma_user_access")
+    .select("role,temple_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (accessError || !access) redirect("/login?error=access");
+  return { supabase, user, access };
+});
+
+export const requireSuperAdmin = cache(async function requireSuperAdmin() {
+  const context = await requireUser();
+  if (context.access.role !== "super_admin") redirect("/admin/dashboard");
+  return context;
 });

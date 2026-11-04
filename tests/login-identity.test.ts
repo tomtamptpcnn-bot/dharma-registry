@@ -2,12 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { loginSchema, usernameToEmail } from "../lib/login-identity";
 
-test("username normalization and account mapping", () => {
-  const previous = process.env.AUTH_USERNAME_EMAIL_MAP;
-  try {
-    process.env.AUTH_USERNAME_EMAIL_MAP = '{"existing":"account@example.com"}';
-    assert.equal(usernameToEmail(" Existing "), "account@example.com");
-    assert.equal(usernameToEmail("New.User"), "new.user@admin.example.com");
+test("username normalization and dharma email mapping", () => {
+    assert.equal(usernameToEmail(" Existing "), "existing@dharma.com");
+    assert.equal(usernameToEmail("New.User"), "new.user@dharma.com");
     assert.equal(
       loginSchema.parse({ username: " CHAIYA ", password: " x " }).password,
       " x ",
@@ -18,8 +15,4 @@ test("username normalization and account mapping", () => {
         false,
       );
     }
-  } finally {
-    if (previous === undefined) delete process.env.AUTH_USERNAME_EMAIL_MAP;
-    else process.env.AUTH_USERNAME_EMAIL_MAP = previous;
-  }
 });

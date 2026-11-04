@@ -12,13 +12,19 @@ const schema = z.object({
     .max(1000, "ระบุได้ไม่เกิน 1,000 ตัวอักษร"),
 });
 export async function createRegistryOption(input: unknown) {
-  const { supabase } = await requireUser();
-  const parsed = schema.safeParse(input);
+  const { supabase, access } = await requireUser();
+  const parsed = schema.extend({ templeId: z.uuid().optional() }).safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   try {
+    const templeId = access.role === "super_admin" ? parsed.data.templeId : access.temple_id;
+    if (!templeId) return { error: "กรุณาเลือกสถานธรรม" };
+    if (access.role === "super_admin") {
+      const { data: temple } = await supabase.from("dharma_temples").select("id").eq("id", templeId).maybeSingle();
+      if (!temple) return { error: "ไม่พบสถานธรรมที่เลือก" };
+    }
     const { data, error } = await supabase
       .from("registry_options")
-      .insert(parsed.data)
+      .insert({ category: parsed.data.category, value: parsed.data.value, temple_id: templeId })
       .select("*")
       .single();
     if (error)

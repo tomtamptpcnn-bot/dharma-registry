@@ -12,12 +12,14 @@ import {
 } from "@/lib/option-counts";
 export async function getRegistryOptions(
   category?: OptionCategory,
+  requestedTempleId?: string,
 ): Promise<RegistryOption[]> {
-  const { supabase } = await requireUser();
+  const { supabase, access } = await requireUser();
   const result: RegistryOption[] = [];
-  // Supabase limits each response. Page through all master values.
+  const templeId = access.role === "super_admin" ? requestedTempleId : access.temple_id;
   for (let offset = 0; ; offset += 500) {
     let query = supabase.from("registry_options").select("*");
+    if (templeId) query = query.eq("temple_id", templeId);
     if (category) query = query.eq("category", category);
     const { data, error } = await query
       .order("category")
@@ -34,9 +36,11 @@ export async function getRegistryOptions(
   return result;
 }
 
-export async function getRegistryOptionStats() {
-  const { supabase } = await requireUser();
-  const options = await getRegistryOptions();
+export async function getRegistryOptionStats(templeId: string) {
+  const { supabase, access } = await requireUser();
+  const scopedTempleId = access.role === "super_admin" ? templeId : access.temple_id;
+  if (!scopedTempleId) throw new Error("กรุณาเลือกสถานธรรม");
+  const options = await getRegistryOptions(undefined, scopedTempleId);
   const counts = createOptionCounts();
   let total = 0;
   // Count all rows, not only the first API page; never send recipient details to the UI.
@@ -46,6 +50,7 @@ export async function getRegistryOptionStats() {
       .select(
         "recommended_by, certified_by, transmitted_by, class_name, level, received_place",
       )
+      .eq("temple_id", scopedTempleId)
       .order("id")
       .range(offset, offset + 499);
     if (error)
@@ -61,5 +66,5 @@ export async function getRegistryOptionStats() {
         [...counts[category].values()].reduce((sum, count) => sum + count, 0),
     ]),
   ) as Record<OptionCategory, number>;
-  return { options: countedOptions(options, counts), total, unassigned };
+  return { options: countedOptions(options, counts), total, unassigned, templeId: scopedTempleId };
 }

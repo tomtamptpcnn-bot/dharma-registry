@@ -14,12 +14,14 @@ export function OptionSelect({
   value,
   onChange,
   disabled,
+  templeId,
 }: {
   category: OptionCategory;
   options: RegistryOption[];
   value?: string | null;
   onChange?: (value: string | null) => void;
   disabled?: boolean;
+  templeId?: string;
 }) {
   const [added, setAdded] = useState<RegistryOption[]>([]);
   const [open, setOpen] = useState(false);
@@ -42,7 +44,7 @@ export function OptionSelect({
     setBusy(true);
     setError("");
     try {
-      const result = await createRegistryOption({ category, value: name });
+      const result = await createRegistryOption({ category, value: name, templeId });
       if (result.error) {
         setError(result.error);
         return;

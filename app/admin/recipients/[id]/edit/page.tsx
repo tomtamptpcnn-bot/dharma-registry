@@ -7,9 +7,7 @@ export default async function EditPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [recipient, options] = await Promise.all([
-    getRecipient(id),
-    getRegistryOptions(),
-  ]);
+  const recipient = await getRecipient(id);
+  const options = await getRegistryOptions(undefined, recipient.temple_id);
   return <RecipientForm recipient={recipient} options={options} />;
 }

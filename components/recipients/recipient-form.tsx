@@ -8,7 +8,7 @@ import { AddressInput } from "@/components/recipients/address-input";
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { unstable_rethrow, useRouter } from "next/navigation";
-import { Alert, Button, Divider, Form, Input, InputNumber } from "antd";
+import { Alert, Button, Divider, Form, Input, InputNumber, Select } from "antd";
 import { ArrowLeftOutlined, SaveOutlined } from "@ant-design/icons";
 import dayjs, { type Dayjs } from "dayjs";
 import { saveRecipient } from "@/app/actions";
@@ -25,10 +25,15 @@ type Values = Omit<
 export function RecipientForm({
   recipient,
   options,
+  temples = [],
+  initialTempleId,
 }: {
   recipient?: DharmaRecipient;
   options: RegistryOption[];
+  temples?: { id: string; name: string }[];
+  initialTempleId?: string;
 }) {
+  const [templeId, setTempleId] = useState(initialTempleId);
   const [busy, startTransition] = useTransition();
   const [error, setError] = useState("");
   const router = useRouter();
@@ -56,7 +61,7 @@ export function RecipientForm({
     };
     startTransition(async () => {
       try {
-        const result = await saveRecipient(input, recipient?.id);
+        const result = await saveRecipient(input, recipient?.id, templeId);
         setError(result.error);
       } catch (error) {
         // Let Next.js handle the successful action's redirect.
@@ -80,6 +85,11 @@ export function RecipientForm({
         กรอกข้อมูลทะเบียนให้ครบถ้วน ช่องที่มี * จำเป็นต้องระบุ
       </p>
       <div className="section-card max-w-5xl">
+        {temples.length > 0 && (
+          <Form.Item label="สถานธรรม" required>
+            <Select showSearch optionFilterProp="label" value={templeId} onChange={setTempleId} options={[...temples].sort((a, b) => a.name.localeCompare(b.name, "th")).map((temple) => ({ value: temple.id, label: temple.name }))} />
+          </Form.Item>
+        )}
         {error && (
           <Alert type="error" showIcon message={error} className="mb-6" />
         )}
@@ -165,6 +175,7 @@ export function RecipientForm({
               <OptionSelect
                 category="recommended_by"
                 options={options}
+                templeId={templeId}
                 disabled={busy}
               />
             </Form.Item>
@@ -172,6 +183,7 @@ export function RecipientForm({
               <OptionSelect
                 category="certified_by"
                 options={options}
+                templeId={templeId}
                 disabled={busy}
               />
             </Form.Item>
@@ -179,6 +191,7 @@ export function RecipientForm({
               <OptionSelect
                 category="transmitted_by"
                 options={options}
+                templeId={templeId}
                 disabled={busy}
               />
             </Form.Item>
@@ -242,6 +255,7 @@ export function RecipientForm({
               <OptionSelect
                 category="class_name"
                 options={options}
+                templeId={templeId}
                 disabled={busy}
               />
             </Form.Item>
@@ -249,6 +263,7 @@ export function RecipientForm({
               <OptionSelect
                 category="level"
                 options={options}
+                templeId={templeId}
                 disabled={busy}
               />
             </Form.Item>
@@ -260,6 +275,7 @@ export function RecipientForm({
               <OptionSelect
                 category="received_place"
                 options={options}
+                templeId={templeId}
                 disabled={busy}
               />
             </Form.Item>

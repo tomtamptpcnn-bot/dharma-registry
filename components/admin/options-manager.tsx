@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Alert,
   Modal,
@@ -12,6 +13,7 @@ import {
   Table,
   Tabs,
   Tag,
+  Tooltip,
 } from "antd";
 import {
   PlusOutlined,
@@ -34,26 +36,39 @@ export function OptionsManager({
   options,
   total,
   unassigned,
+  templeId,
+  temples,
+  canSelectTemple,
 }: {
   options: CountedOption[];
   total: number;
   unassigned: Record<OptionCategory, number>;
+  templeId: string;
+  temples: { id: string; name: string }[];
+  canSelectTemple: boolean;
 }) {
+  const router = useRouter();
   const [category, setCategory] = useState<OptionCategory>("recommended_by");
   const [searchInput, setSearchInput] = useState("");
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
+  const [dateOrder, setDateOrder] = useState<"desc" | "asc">("desc");
   function clearSearch() {
     setSearchInput("");
     setQuery("");
     setPage(1);
   }
   const categoryOptions = options.filter((o) => o.category === category);
-  const filteredOptions = categoryOptions.filter((o) =>
-    o.value
-      .toLocaleLowerCase("th-TH")
-      .includes(query.toLocaleLowerCase("th-TH")),
-  );
+  const filteredOptions = categoryOptions
+    .filter((o) =>
+      o.value
+        .toLocaleLowerCase("th-TH")
+        .includes(query.toLocaleLowerCase("th-TH")),
+    )
+    .sort((a, b) => {
+      const difference = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      return dateOrder === "asc" ? difference : -difference;
+    });
   const [target, setTarget] = useState<CountedOption | null>(null);
   const [operation, setOperation] = useState<"rename" | "delete">("rename");
   const [editValue, setEditValue] = useState("");
@@ -100,7 +115,7 @@ export function OptionsManager({
     setBusy(true);
     setError("");
     try {
-      const result = await createRegistryOption(input);
+      const result = await createRegistryOption({ ...input, templeId });
       if (result.error) {
         setError(result.error);
         return;
@@ -119,10 +134,15 @@ export function OptionsManager({
     <>
       <h1 className="page-heading">จัดการข้อมูลตัวเลือก</h1>
       <p className="page-description mb-6">
+        {canSelectTemple ? "เลือกสถานธรรมเพื่อดูและจัดการตัวเลือกของสาขานั้น " : "จัดการตัวเลือกของสถานธรรมนี้ "}
         เพิ่ม แก้ไข และลบข้อมูลตัวเลือกทั้ง 6 หมวด
         ชื่อในหมวดเดียวกันห้ามซ้ำแม้ตัวพิมพ์เล็ก–ใหญ่ต่างกัน
         ลบได้เฉพาะรายการที่ไม่มีทะเบียนใช้งาน
       </p>
+      {canSelectTemple && <div className="section-card mb-6 max-w-xl">
+        <label htmlFor="options-temple" className="block mb-2 text-sm">สถานธรรม</label>
+        <Select id="options-temple" showSearch optionFilterProp="label" value={templeId} className="w-full" options={[...temples].sort((a, b) => a.name.localeCompare(b.name, "th")).map((temple) => ({ value: temple.id, label: temple.name }))} onChange={(id) => router.push(`/admin/options?temple=${encodeURIComponent(id)}`)} />
+      </div>}
       <section className="section-card mb-6">
         {error && (
           <Alert className="mb-4" type="error" showIcon message={error} />
@@ -141,10 +161,11 @@ export function OptionsManager({
               rules={[{ required: true, message: "กรุณาเลือกหมวด" }]}
             >
               <Select
-                options={optionCategories.map((value) => ({
-                  value,
-                  label: optionLabels[value],
-                }))}
+                showSearch
+                optionFilterProp="label"
+                options={optionCategories
+                  .map((value) => ({ value, label: optionLabels[value] }))
+                  .sort((a, b) => a.label.localeCompare(b.label, "th"))}
               />
             </Form.Item>
             <Form.Item
@@ -215,7 +236,7 @@ export function OptionsManager({
           <label htmlFor="option-search" className="block mb-2 text-sm">
             ค้นหา{optionLabels[category]}
           </label>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 items-end">
             <Input
               id="option-search"
               className="!w-full sm:!w-80"
@@ -242,6 +263,25 @@ export function OptionsManager({
             >
               ล้างค่า
             </Button>
+            <div className="w-full sm:w-56">
+              <label htmlFor="option-date-order" className="block mb-2 text-sm">
+                เรียงตามวันที่เพิ่ม
+              </label>
+              <Select
+                id="option-date-order"
+                aria-label="เรียงตามวันที่เพิ่ม"
+                className="w-full"
+                value={dateOrder}
+                onChange={(value: "desc" | "asc") => {
+                  setDateOrder(value);
+                  setPage(1);
+                }}
+                options={[
+                  { value: "desc", label: "ใหม่ไปเก่า" },
+                  { value: "asc", label: "เก่าไปใหม่" },
+                ]}
+              />
+            </div>
           </div>
           <p className="mt-3 text-sm text-gray-500" role="status">
             แสดง {filteredOptions.length.toLocaleString("th-TH")} จาก{" "}
@@ -261,31 +301,42 @@ export function OptionsManager({
               width: 180,
               render: (_, row) => (
                 <Space>
-                  <Button
-                    icon={<EditOutlined />}
-                    onClick={() => openAction(row, "rename")}
-                    aria-label={`แก้ไข ${row.value}`}
-                  >
-                    แก้ไข
-                  </Button>
-                  <Button
-                    danger
-                    disabled={row.recipientCount > 0}
-                    title={
-                      row.recipientCount > 0
-                        ? `ลบไม่ได้ มีทะเบียนใช้งาน ${row.recipientCount} รายการ`
-                        : "ลบรายการที่ไม่มีทะเบียนใช้งาน"
-                    }
-                    icon={<DeleteOutlined />}
-                    onClick={() => openAction(row, "delete")}
-                    aria-label={`ลบ ${row.value}`}
-                  >
-                    ลบ
-                  </Button>
+                  <Tooltip title="แก้ไขรายการ">
+                    <Button
+                      icon={<EditOutlined />}
+                      onClick={() => openAction(row, "rename")}
+                      aria-label={`แก้ไข ${row.value}`}
+                    >
+                      แก้ไข
+                    </Button>
+                  </Tooltip>
+                  <Tooltip title={row.recipientCount > 0
+                    ? `ลบไม่ได้ มีทะเบียนใช้งาน ${row.recipientCount} รายการ`
+                    : "ลบรายการที่ไม่มีทะเบียนใช้งาน"}>
+                    <Button
+                      danger
+                      disabled={row.recipientCount > 0}
+                      icon={<DeleteOutlined />}
+                      onClick={() => openAction(row, "delete")}
+                      aria-label={`ลบ ${row.value}`}
+                    >
+                      ลบ
+                    </Button>
+                  </Tooltip>
                 </Space>
               ),
             },
             { title: optionLabels[category], dataIndex: "value" },
+            {
+              title: "วันที่เพิ่มข้อมูล",
+              dataIndex: "created_at",
+              width: 180,
+              render: (value: string) => new Intl.DateTimeFormat("th-TH", {
+                dateStyle: "medium",
+                timeStyle: "short",
+                timeZone: "Asia/Bangkok",
+              }).format(new Date(value)),
+            },
             {
               title: "จำนวนผู้รับธรรมะ",
               dataIndex: "recipientCount",

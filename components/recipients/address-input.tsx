@@ -35,7 +35,9 @@ export function AddressInput({
     onChange?.(serialized);
   };
   const options = (names: string[]) =>
-    names.map((name) => ({ label: name, value: name }));
+    [...names]
+      .sort((left, right) => left.localeCompare(right, "th"))
+      .map((name) => ({ label: name, value: name }));
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
       <label className="md:col-span-2">

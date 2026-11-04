@@ -1,5 +1,5 @@
 "use server";
-import { loginSchema, usernameToEmail } from "@/lib/login-identity";
+import { loginSchema, usernameToEmail, usernameToPreviousEmail } from "@/lib/login-identity";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
@@ -10,10 +10,21 @@ export async function login(values: unknown) {
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   try {
     const supabase = await createClient();
-    const { error } = await supabase.auth.signInWithPassword({
-      email: usernameToEmail(parsed.data.username),
+    const email = usernameToEmail(parsed.data.username);
+    let { error } = await supabase.auth.signInWithPassword({
+      email,
       password: parsed.data.password,
     });
+    const previousEmail = usernameToPreviousEmail(parsed.data.username);
+    let migratedPreviousAccount = false;
+    if (error?.code === "invalid_credentials" && previousEmail) {
+      const previousAttempt = await supabase.auth.signInWithPassword({
+        email: previousEmail,
+        password: parsed.data.password,
+      });
+      error = previousAttempt.error;
+      migratedPreviousAccount = !previousAttempt.error;
+    }
     if (error) {
       if (error.code === "invalid_credentials")
         return {
@@ -35,27 +46,67 @@ export async function login(values: unknown) {
         error: "ไม่สามารถเข้าสู่ระบบได้ กรุณาลองอีกครั้งหรือติดต่อผู้ดูแลระบบ",
       };
     }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      if (migratedPreviousAccount) {
+        const { createAdminClient } = await import("@/lib/supabase/admin");
+        const admin = createAdminClient();
+        const { error: emailUpdateError } = await admin.auth.admin.updateUserById(user.id, {
+          email,
+          email_confirm: true,
+        });
+        if (emailUpdateError) {
+          await supabase.auth.signOut();
+          return { error: "เข้าสู่ระบบได้ แต่ย้ายบัญชีเป็น @dharma.com ไม่สำเร็จ กรุณาติดต่อ Super Admin" };
+        }
+      }
+      const { data: access } = await supabase
+        .from("dharma_user_access")
+        .select("temple_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      await supabase.rpc("log_activity_event", {
+        event_action: "login",
+        event_type: "auth",
+        event_id: user.id,
+        target_temple_id: access?.temple_id ?? null,
+        event_details: { method: "password" },
+      });
+    }
   } catch {
     return { error: "ไม่สามารถเชื่อมต่อระบบได้ กรุณาลองอีกครั้ง" };
   }
   redirect("/admin/recipients");
 }
 export async function logout() {
-  const supabase = await createClient();
+  const { supabase, access } = await requireUser();
+  // Activity logging is best-effort; logout must still complete if the audit
+  // endpoint is unavailable or the log policy rejects the event.
+  await supabase.rpc("log_activity_event", {
+    event_action: "logout",
+    event_type: "auth",
+    target_temple_id: access.temple_id,
+  });
   const { error } = await supabase.auth.signOut();
   if (error) return { error: "ออกจากระบบไม่สำเร็จ กรุณาลองอีกครั้ง" };
-  redirect("/login");
+  return { success: true };
 }
-export async function saveRecipient(values: unknown, id?: string) {
-  const { supabase } = await requireUser();
+export async function saveRecipient(values: unknown, id?: string, requestedTempleId?: string) {
+  const { supabase, access } = await requireUser();
   const parsed = recipientSchema.safeParse(values);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   if (id && !uuidSchema.safeParse(id).success)
     return { error: "รหัสทะเบียนไม่ถูกต้อง" };
+  const targetTempleId = access.role === "super_admin" ? requestedTempleId : access.temple_id;
+  if (!targetTempleId || !uuidSchema.safeParse(targetTempleId).success)
+    return { error: "กรุณาเลือกสถานธรรม" };
   try {
     const query = id
       ? supabase.from("dharma_recipients").update(parsed.data).eq("id", id)
-      : supabase.from("dharma_recipients").insert(parsed.data);
+      : supabase.from("dharma_recipients").insert({
+          ...parsed.data,
+          temple_id: targetTempleId,
+        });
     const { data, error } = await query.select("id").single();
     if (error?.code === "23503")
       return {
