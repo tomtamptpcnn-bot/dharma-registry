@@ -21,6 +21,9 @@ export function usernameToEmail(username: string): string {
 // Temporary bridge for accounts created before the app standardized on @dharma.com.
 export function usernameToPreviousEmail(username: string): string | null {
   const normalized = loginSchema.shape.username.parse(username);
-  if (normalized === "tomtamptpcnn") return `${normalized}@gmail.com`;
-  return null;
+  const previousEmails: Record<string, string> = {
+    tomtamptpcnn: "tomtamptpcnn@gmail.com",
+    "super-admin": "super-admin@gmail.com",
+  };
+  return previousEmails[normalized] ?? null;
 }

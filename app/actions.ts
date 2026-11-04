@@ -56,8 +56,13 @@ export async function login(values: unknown) {
           email_confirm: true,
         });
         if (emailUpdateError) {
-          await supabase.auth.signOut();
-          return { error: "เข้าสู่ระบบได้ แต่ย้ายบัญชีเป็น @dharma.com ไม่สำเร็จ กรุณาติดต่อ Super Admin" };
+          // Keep the authenticated session: email migration is secondary to
+          // allowing the existing administrator to regain access.
+          console.error("[login] Legacy email migration failed", {
+            userId: user.id,
+            code: emailUpdateError.code,
+            message: emailUpdateError.message,
+          });
         }
       }
       const { data: access, error: accessError } = await supabase
