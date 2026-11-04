@@ -60,16 +60,22 @@ export async function login(values: unknown) {
           return { error: "เข้าสู่ระบบได้ แต่ย้ายบัญชีเป็น @dharma.com ไม่สำเร็จ กรุณาติดต่อ Super Admin" };
         }
       }
-      const { data: access } = await supabase
+      const { data: access, error: accessError } = await supabase
         .from("dharma_user_access")
-        .select("temple_id")
+        .select("role,temple_id")
         .eq("user_id", user.id)
         .maybeSingle();
+      if (accessError || !access) {
+        await supabase.auth.signOut();
+        return {
+          error: "รหัสผ่านถูกต้อง แต่บัญชีนี้ยังไม่มีสิทธิ์เข้าใช้ระบบ กรุณาให้ Super Admin ตรวจสอบการผูกบัญชีในตาราง dharma_user_access",
+        };
+      }
       await supabase.rpc("log_activity_event", {
         event_action: "login",
         event_type: "auth",
         event_id: user.id,
-        target_temple_id: access?.temple_id ?? null,
+        target_temple_id: access.temple_id,
         event_details: { method: "password" },
       });
     }
