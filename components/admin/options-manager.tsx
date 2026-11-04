@@ -299,6 +299,13 @@ export function OptionsManager({
           dataSource={filteredOptions}
           columns={[
             {
+              title: "ลำดับ",
+              key: "row-number",
+              width: 72,
+              align: "center",
+              render: (_, __, index) => (page - 1) * 10 + index + 1,
+            },
+            {
               title: "จัดการ",
               key: "actions",
               width: 180,
