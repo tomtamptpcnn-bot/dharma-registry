@@ -43,7 +43,7 @@ export function OptionsManager({
   options: CountedOption[];
   total: number;
   unassigned: Record<OptionCategory, number>;
-  templeId: string;
+  templeId: string | null;
   temples: { id: string; name: string }[];
   canSelectTemple: boolean;
 }) {
@@ -141,8 +141,11 @@ export function OptionsManager({
       </p>
       {canSelectTemple && <div className="section-card mb-6 max-w-xl">
         <label htmlFor="options-temple" className="block mb-2 text-sm">สถานธรรม</label>
-        <Select id="options-temple" showSearch optionFilterProp="label" value={templeId} className="w-full" options={[...temples].sort((a, b) => a.name.localeCompare(b.name, "th")).map((temple) => ({ value: temple.id, label: temple.name }))} onChange={(id) => router.push(`/admin/options?temple=${encodeURIComponent(id)}`)} />
+        <Select id="options-temple" showSearch optionFilterProp="label" value={templeId ?? undefined} placeholder="เลือกสถานธรรม" className="w-full" options={[...temples].sort((a, b) => a.name.localeCompare(b.name, "th")).map((temple) => ({ value: temple.id, label: temple.name }))} onChange={(id) => router.push(`/admin/options?temple=${encodeURIComponent(id)}`)} />
       </div>}
+      {!templeId ? (
+        <Alert type="info" showIcon message="เลือกสถานธรรมเพื่อดูและจัดการข้อมูลตัวเลือกของสาขานั้น" />
+      ) : <>
       <section className="section-card mb-6">
         {error && (
           <Alert className="mb-4" type="error" showIcon message={error} />
@@ -368,6 +371,7 @@ export function OptionsManager({
           จึงไม่ควรนำยอดข้ามหมวดมารวมกัน
         </p>
       </section>
+      </>}
       <Modal
         title={operation === "rename" ? "แก้ไขรายการ" : "ยืนยันการลบรายการ"}
         open={Boolean(target)}
