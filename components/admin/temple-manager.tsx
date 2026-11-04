@@ -4,7 +4,7 @@ import { App, Button, Input, Modal, Table, Tooltip } from "antd";
 import { DeleteOutlined, EditOutlined, KeyOutlined, PlusOutlined, SyncOutlined } from "@ant-design/icons";
 import { createTemple, manageTemple, migrateLegacyManagerEmails, resetTempleManagerPassword } from "@/app/admin/temples/actions";
 
-type Temple = { id: string; name: string; caretaker_name: string; manager_username: string; created_at: string };
+type Temple = { id: string; name: string; caretaker_name: string; manager_username: string; created_at: string; recipient_count: number };
 export function TempleManager({ temples }: { temples: Temple[] }) {
   const [name, setName] = useState("");
   const [managerName, setManagerName] = useState("");
@@ -106,7 +106,15 @@ export function TempleManager({ temples }: { temples: Temple[] }) {
       </div>
       <Button type="primary" icon={<PlusOutlined />} loading={busy} onClick={add}>สร้างสถานธรรมและบัญชีผู้ดูแล</Button>
     </div>
-    <div className="section-card"><Table rowKey="id" dataSource={temples} pagination={false} columns={[{ title: "ชื่อสถานธรรม", dataIndex: "name" }, { title: "ผู้ดูแล", dataIndex: "caretaker_name", render: (value: string) => value || "—" }, { title: "Username", dataIndex: "manager_username", render: (value: string) => value || "—" }, { title: "รหัสสาขา", dataIndex: "id" }, { title: "จัดการ", key: "actions", width: 160, render: (_, temple: Temple) => <div className="flex gap-1"><Tooltip title="แก้ไขข้อมูลสถานธรรม"><Button aria-label={`แก้ไข ${temple.name}`} icon={<EditOutlined />} onClick={() => { setEditing(temple); setEditName(temple.name); setEditManager(temple.caretaker_name); }} /></Tooltip><Tooltip title="รีเซ็ตรหัสผ่าน"><Button aria-label={`รีเซ็ตรหัสผ่าน ${temple.name}`} icon={<KeyOutlined />} onClick={() => { setResetting(temple); setNewPassword(""); }} /></Tooltip><Tooltip title="ลบได้เฉพาะสาขาที่ยังไม่มีทะเบียน"><Button danger aria-label={`ลบสถานธรรม ${temple.name}`} icon={<DeleteOutlined />} loading={busy} onClick={() => deleteTemple(temple)} /></Tooltip></div> }]} /></div>
+    <div className="section-card"><Table rowKey="id" dataSource={temples} pagination={false} columns={[{ title: "ชื่อสถานธรรม", dataIndex: "name" }, { title: "ผู้ดูแล", dataIndex: "caretaker_name", render: (value: string) => value || "—" }, { title: "Username", dataIndex: "manager_username", render: (value: string) => value || "—" }, { title: "ทะเบียน", dataIndex: "recipient_count", align: "right", render: (count: number) => `${count.toLocaleString("th-TH")} รายการ` }, { title: "รหัสสาขา", dataIndex: "id" }, { title: "จัดการ", key: "actions", width: 160, render: (_, temple: Temple) => {
+      const canDelete = temple.recipient_count === 0 && temples.length > 1;
+      const deleteTooltip = temple.recipient_count > 0
+        ? `ลบไม่ได้ มีทะเบียนผู้รับธรรมะ ${temple.recipient_count.toLocaleString("th-TH")} รายการ`
+        : temples.length <= 1
+          ? "ต้องเหลือสถานธรรมอย่างน้อยหนึ่งแห่ง"
+          : "ลบสถานธรรมที่ไม่มีทะเบียน";
+      return <div className="flex gap-1"><Tooltip title="แก้ไขข้อมูลสถานธรรม"><Button aria-label={`แก้ไข ${temple.name}`} icon={<EditOutlined />} onClick={() => { setEditing(temple); setEditName(temple.name); setEditManager(temple.caretaker_name); }} /></Tooltip><Tooltip title="รีเซ็ตรหัสผ่าน"><Button aria-label={`รีเซ็ตรหัสผ่าน ${temple.name}`} icon={<KeyOutlined />} onClick={() => { setResetting(temple); setNewPassword(""); }} /></Tooltip><Tooltip title={deleteTooltip}><span><Button danger disabled={!canDelete || busy} aria-label={`ลบสถานธรรม ${temple.name}`} icon={<DeleteOutlined />} loading={busy} onClick={() => deleteTemple(temple)} /></span></Tooltip></div>;
+    } }]} /></div>
     <Modal title="แก้ไขข้อมูลสถานธรรม" open={!!editing} onCancel={() => setEditing(null)} onOk={saveEdit} confirmLoading={busy} okText="บันทึก" cancelText="ยกเลิก">
       <div className="grid gap-4 pt-4">
         <Input aria-label="ชื่อสถานธรรม" value={editName} onChange={(event) => setEditName(event.target.value)} placeholder="ชื่อสถานธรรม" maxLength={200} />
