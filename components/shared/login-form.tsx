@@ -80,19 +80,13 @@ export function LoginForm({ configured }: { configured: boolean }) {
           <Form layout="vertical" onFinish={submit} requiredMark={false}>
             <Form.Item
               name="username"
-              label="ชื่อผู้ใช้"
-              rules={[
-                { required: true, message: "กรุณาระบุชื่อผู้ใช้" },
-                {
-                  pattern: /^[a-zA-Z0-9][a-zA-Z0-9._-]{2,31}$/,
-                  message: "ใช้ภาษาอังกฤษหรือตัวเลข 3–32 ตัว และใช้ . _ - ได้",
-                },
-              ]}
+              label="ชื่อผู้ใช้หรืออีเมล"
+              rules={[{ required: true, message: "กรุณาระบุชื่อผู้ใช้หรืออีเมล" }]}
             >
               <Input
                 prefix={<UserOutlined className="text-gray-400 mr-2" />}
                 autoComplete="username"
-                placeholder="เช่น chaiya"
+                placeholder="เช่น tomtam หรือ tomtam@dharma.com"
                 autoCapitalize="none"
                 spellCheck={false}
                 maxLength={32}

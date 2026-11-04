@@ -6,7 +6,13 @@ import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
 import { recipientSchema, uuidSchema } from "@/lib/validation";
 export async function login(values: unknown) {
-  const parsed = loginSchema.safeParse(values);
+  let loginValues = values;
+  if (values && typeof values === "object" && "username" in values && typeof values.username === "string") {
+    const identifier = values.username.trim().toLowerCase();
+    const emailMatch = identifier.match(/^([a-z0-9][a-z0-9._-]{2,31})@(dharma\.com|gmail\.com)$/);
+    if (emailMatch) loginValues = { ...values, username: emailMatch[1] };
+  }
+  const parsed = loginSchema.safeParse(loginValues);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   try {
     const supabase = await createClient();
